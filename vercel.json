@@ -1,5 +1,10 @@
 {
   "buildCommand": "next build",
   "framework": "nextjs",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "functions": {
+    "src/app/api/insight/route.ts": {
+      "maxDuration": 30
+    }
+  }
 }
