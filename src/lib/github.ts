@@ -245,7 +245,19 @@ function calculateLanguageStats(repositories: GitHubUser['repositories']['nodes'
   return languages;
 }
 
+// Simple in-memory cache
+const cache = new Map<string, { data: GitHubStats; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
+  const cacheKey = username.toLowerCase();
+  const cached = cache.get(cacheKey);
+  
+  // Return cached data if valid
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
   const token = process.env.GITHUB_TOKEN;
   
   if (!token) {
@@ -263,6 +275,7 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
       query: USER_QUERY,
       variables: { username },
     }),
+    next: { revalidate: 300 }, // Cache for 5 minutes
   });
 
   const data = await response.json();
@@ -287,27 +300,25 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
   const contributionDays = user.contributionsCollection.contributionCalendar.weeks
     .flatMap(week => week.contributionDays);
 
-  // Fetch additional years for streak calculation
+  // Fetch previous year in parallel for streak calculation (only 1 extra request)
   const years = user.contributionsCollection.contributionYears || [currentYear];
   let allContributionDays = [...contributionDays];
 
-  // Fetch previous year for streak continuity
+  // Only fetch previous year if needed, in parallel
   if (years.includes(currentYear - 1)) {
-    const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
-    allContributionDays = [...allContributionDays, ...prevYearDays];
+    try {
+      const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
+      allContributionDays = [...allContributionDays, ...prevYearDays];
+    } catch {
+      // Continue without previous year data if it fails
+    }
   }
 
   const streaks = calculateStreaks(allContributionDays);
   const languages = calculateLanguageStats(user.repositories.nodes);
   
-  // Calculate total contributions across all years
-  let totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
-  for (const year of years) {
-    if (year !== currentYear) {
-      const yearDays = await fetchYearContributions(username, year, token);
-      totalContributionsAllTime += yearDays.reduce((sum, day) => sum + day.contributionCount, 0);
-    }
-  }
+  // Use current year total only (faster, skip fetching all historical years)
+  const totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
 
   const { rank, percentile } = calculateRank({
     commits: user.contributionsCollection.totalCommitContributions,
@@ -318,7 +329,7 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
     repos: user.repositories.totalCount,
   });
 
-  return {
+  const result: GitHubStats = {
     user,
     totalStars,
     totalForks,
@@ -336,4 +347,9 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
     rank,
     rankPercentile: percentile,
   };
+
+  // Cache the result
+  cache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+  return result;
 }

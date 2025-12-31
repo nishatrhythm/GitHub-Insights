@@ -2,9 +2,15 @@
   "buildCommand": "next build",
   "framework": "nextjs",
   "installCommand": "npm install",
-  "functions": {
-    "src/app/api/insight/route.ts": {
-      "maxDuration": 30
+  "headers": [
+    {
+      "source": "/api/insight",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
     }
-  }
+  ]
 }

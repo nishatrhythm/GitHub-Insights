@@ -3,8 +3,9 @@ import { fetchGitHubStats } from '@/lib/github';
 import { generateInsightCard } from '@/lib/card-generator';
 import { getTheme } from '@/lib/themes';
 
-export const runtime = 'nodejs';
-export const revalidate = 3600; // Cache for 1 hour
+// Use edge runtime for faster cold starts (critical for GitHub's 4s timeout)
+export const runtime = 'edge';
+export const preferredRegion = 'auto';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
