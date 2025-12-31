@@ -264,92 +264,107 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
     throw new Error('GitHub token is not configured');
   }
 
-  // Fetch main user data
-  const response = await fetch(GITHUB_GRAPHQL_API, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query: USER_QUERY,
-      variables: { username },
-    }),
-    next: { revalidate: 300 }, // Cache for 5 minutes
-  });
+  // Create abort controller with 8 second timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  const data = await response.json();
+  try {
+    // Fetch main user data
+    const response = await fetch(GITHUB_GRAPHQL_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: USER_QUERY,
+        variables: { username },
+      }),
+      signal: controller.signal,
+    });
 
-  if (data.errors) {
-    console.error('GraphQL errors:', data.errors);
-    throw new Error(data.errors[0]?.message || 'Failed to fetch GitHub data');
-  }
+    clearTimeout(timeoutId);
 
-  if (!data.data?.user) {
-    throw new Error(`User "${username}" not found`);
-  }
+    const data = await response.json();
 
-  const user: GitHubUser = data.data.user;
-
-  // Calculate totals
-  const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
-  const totalForks = user.repositories.nodes.reduce((sum, repo) => sum + repo.forkCount, 0);
-
-  // Get contribution data for current year
-  const currentYear = new Date().getFullYear();
-  const contributionDays = user.contributionsCollection.contributionCalendar.weeks
-    .flatMap(week => week.contributionDays);
-
-  // Fetch previous year in parallel for streak calculation (only 1 extra request)
-  const years = user.contributionsCollection.contributionYears || [currentYear];
-  let allContributionDays = [...contributionDays];
-
-  // Only fetch previous year if needed, in parallel
-  if (years.includes(currentYear - 1)) {
-    try {
-      const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
-      allContributionDays = [...allContributionDays, ...prevYearDays];
-    } catch {
-      // Continue without previous year data if it fails
+    if (data.errors) {
+      console.error('GraphQL errors:', data.errors);
+      throw new Error(data.errors[0]?.message || 'Failed to fetch GitHub data');
     }
+
+    if (!data.data?.user) {
+      throw new Error(`User "${username}" not found`);
+    }
+
+    const user: GitHubUser = data.data.user;
+
+    // Calculate totals
+    const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
+    const totalForks = user.repositories.nodes.reduce((sum, repo) => sum + repo.forkCount, 0);
+
+    // Get contribution data for current year
+    const currentYear = new Date().getFullYear();
+    const contributionDays = user.contributionsCollection.contributionCalendar.weeks
+      .flatMap(week => week.contributionDays);
+
+    // Fetch previous year in parallel for streak calculation (only 1 extra request)
+    const years = user.contributionsCollection.contributionYears || [currentYear];
+    let allContributionDays = [...contributionDays];
+
+    // Only fetch previous year if needed, in parallel
+    if (years.includes(currentYear - 1)) {
+      try {
+        const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
+        allContributionDays = [...allContributionDays, ...prevYearDays];
+      } catch {
+        // Continue without previous year data if it fails
+      }
+    }
+
+    const streaks = calculateStreaks(allContributionDays);
+    const languages = calculateLanguageStats(user.repositories.nodes);
+    
+    // Use current year total only (faster, skip fetching all historical years)
+    const totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
+
+    const { rank, percentile } = calculateRank({
+      commits: user.contributionsCollection.totalCommitContributions,
+      prs: user.contributionsCollection.totalPullRequestContributions,
+      issues: user.contributionsCollection.totalIssueContributions,
+      stars: totalStars,
+      followers: user.followers.totalCount,
+      repos: user.repositories.totalCount,
+    });
+
+    const result: GitHubStats = {
+      user,
+      totalStars,
+      totalForks,
+      totalCommits: user.contributionsCollection.totalCommitContributions,
+      totalPRs: user.contributionsCollection.totalPullRequestContributions,
+      totalIssues: user.contributionsCollection.totalIssueContributions,
+      totalContributions: user.contributionsCollection.contributionCalendar.totalContributions,
+      totalContributionsAllTime,
+      contributedRepos: user.contributionsCollection.totalRepositoryContributions,
+      languages,
+      currentStreak: streaks.current,
+      longestStreak: streaks.longest,
+      accountCreatedAt: user.createdAt,
+      contributionData: contributionDays,
+      rank,
+      rankPercentile: percentile,
+    };
+
+    // Cache the result
+    cache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    return result;
+
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out - GitHub API is slow');
+    }
+    throw error;
   }
-
-  const streaks = calculateStreaks(allContributionDays);
-  const languages = calculateLanguageStats(user.repositories.nodes);
-  
-  // Use current year total only (faster, skip fetching all historical years)
-  const totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
-
-  const { rank, percentile } = calculateRank({
-    commits: user.contributionsCollection.totalCommitContributions,
-    prs: user.contributionsCollection.totalPullRequestContributions,
-    issues: user.contributionsCollection.totalIssueContributions,
-    stars: totalStars,
-    followers: user.followers.totalCount,
-    repos: user.repositories.totalCount,
-  });
-
-  const result: GitHubStats = {
-    user,
-    totalStars,
-    totalForks,
-    totalCommits: user.contributionsCollection.totalCommitContributions,
-    totalPRs: user.contributionsCollection.totalPullRequestContributions,
-    totalIssues: user.contributionsCollection.totalIssueContributions,
-    totalContributions: user.contributionsCollection.contributionCalendar.totalContributions,
-    totalContributionsAllTime,
-    contributedRepos: user.contributionsCollection.totalRepositoryContributions,
-    languages,
-    currentStreak: streaks.current,
-    longestStreak: streaks.longest,
-    accountCreatedAt: user.createdAt,
-    contributionData: contributionDays,
-    rank,
-    rankPercentile: percentile,
-  };
-
-  // Cache the result
-  cache.set(cacheKey, { data: result, timestamp: Date.now() });
-
-  return result;
 }

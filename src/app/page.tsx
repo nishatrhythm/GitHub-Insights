@@ -131,8 +131,12 @@ export default function Home() {
     }
   };
 
-  const getMarkdownCode = () => `![GitHub Insights](${baseUrl}${previewUrl})`;
-  const getHtmlCode = () => `<img src="${baseUrl}${previewUrl}" alt="GitHub Insights" />`;
+  const getMarkdownCode = () => `<p align="center">
+  <img src="${baseUrl}${previewUrl}" alt="GitHub Insights" />
+</p>`;
+  const getHtmlCode = () => `<div align="center">
+  <img src="${baseUrl}${previewUrl}" alt="GitHub Insights" />
+</div>`;
 
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text);
