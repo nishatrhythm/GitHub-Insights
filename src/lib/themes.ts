@@ -98,6 +98,29 @@ export const themes: Record<string, ThemeColors> = {
     iconColor: '#64ffda',
     contributionLevels: ['#112240', '#1a4a5e', '#23727c', '#2d9a9a', '#64ffda'],
   },
+    matrix: {
+  background: '#121212',
+  backgroundGradient:
+    'linear-gradient(135deg, #121212 0%, #181818 50%, #121212 100%)',
+  cardBackground: '#181818',
+  border: '#00c875',
+  title: '#00c875',
+  text: '#a6e22e',
+  textSecondary: '#66b266',
+  accent: '#00c875',
+  accentSecondary: '#33ff99',
+  iconColor: '#00c875',
+  contributionLevels: [
+    '#181818',
+    '#223322',
+    '#2d552d',
+    '#44aa44',
+    '#00c875',
+  ],
+},
+
+
+
 };
 
 export function getTheme(themeName: string): ThemeColors {
