@@ -62,7 +62,7 @@ const themes = [
   { id: 'ocean', name: 'Ocean', bgColor: '#0a192f', accentColor: '#64ffda', textColor: '#8892b0' },
    { 
   id: 'matrix', 
-  name: 'Matrix Green', 
+  name: 'Neo Green', 
   bgColor: '#121212',       // VS Code-like dark background
   accentColor: '#00c875',   // soft green highlight
   textColor: '#a6e22e',     // readable muted green for text

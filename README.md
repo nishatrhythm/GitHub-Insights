@@ -76,7 +76,7 @@ Replace `YOUR_USERNAME` with your GitHub username.
 | `dracula` | ![Dracula](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=dracula&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `synthwave` | ![Synthwave](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=synthwave&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `ocean` | ![Ocean](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=ocean&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `matrix` | ![Matrix Green](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=matrix&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `matrix` | ![Neo Green](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=matrix&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 
 ## Self-Hosting
 
