@@ -98,7 +98,7 @@ export const themes: Record<string, ThemeColors> = {
     iconColor: '#64ffda',
     contributionLevels: ['#112240', '#1a4a5e', '#23727c', '#2d9a9a', '#64ffda'],
   },
-    matrix: {
+    neo_green: {
   background: '#121212',
   backgroundGradient:
     'linear-gradient(135deg, #121212 0%, #181818 50%, #121212 100%)',

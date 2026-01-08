@@ -61,7 +61,7 @@ const themes = [
   { id: 'synthwave', name: 'Synthwave', bgColor: '#2b213a', accentColor: '#e2571e', textColor: '#e5289e' },
   { id: 'ocean', name: 'Ocean', bgColor: '#0a192f', accentColor: '#64ffda', textColor: '#8892b0' },
    { 
-  id: 'matrix', 
+  id: 'neo_green', 
   name: 'Neo Green', 
   bgColor: '#121212',       // VS Code-like dark background
   accentColor: '#00c875',   // soft green highlight

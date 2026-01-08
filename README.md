@@ -24,7 +24,7 @@
 - 🔥 **Streak Tracking** - Current and longest contribution streaks with accurate consecutive day detection
 - 📈 **Contribution Graph** - Visual representation of your activity with monthly breakdowns
 - 🗣️ **Top Languages** - Most used programming languages with visual percentages
-- 🎨 **Multiple Themes** - 6 beautiful themes to choose from (GitHub Dark, Radical, Tokyo Night, Dracula, Synthwave, Ocean)
+- 🎨 **Multiple Themes** - 7 beautiful themes to choose from (GitHub Dark, Radical, Tokyo Night, Dracula, Synthwave, Ocean, Neo Green)
 - 📥 **Download Options** - Export your stats card as SVG, PNG, or JPG directly from the UI
 - ⚡ **Fast & Optimized** - Edge runtime with intelligent caching for quick loads
 - 📱 **Responsive Design** - Looks great on any device with mobile-friendly interface
@@ -76,7 +76,7 @@ Replace `YOUR_USERNAME` with your GitHub username.
 | `dracula` | ![Dracula](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=dracula&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `synthwave` | ![Synthwave](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=synthwave&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `ocean` | ![Ocean](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=ocean&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `matrix` | ![Neo Green](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=matrix&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `neo_green` | ![Neo Green](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=neo_green&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 
 ## Self-Hosting
 
