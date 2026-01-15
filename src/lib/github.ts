@@ -7,13 +7,13 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // Pre-compute monthly contributions from daily data
 function computeMonthlyContributions(contributionDays: ContributionDay[]): MonthlyContribution[] {
   const monthMap = new Map<string, number>();
-  
+
   for (const day of contributionDays) {
     const date = new Date(day.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + day.contributionCount);
   }
-  
+
   return Array.from(monthMap.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-12)
@@ -101,7 +101,7 @@ async function fetchYearContributions(username: string, year: number, token: str
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     console.error('GraphQL errors:', data.errors);
     return [];
@@ -140,7 +140,7 @@ async function fetchYearTotalContributions(username: string, year: number, token
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return 0;
   }
@@ -185,7 +185,7 @@ async function fetchCurrentYearContributionDays(username: string, token: string)
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return [];
   }
@@ -227,7 +227,7 @@ async function fetchCurrentYearContributions(username: string, token: string): P
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return 0;
   }
@@ -240,7 +240,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   if (!contributionDays.length) return { current: emptyStreak, longest: emptyStreak };
 
   // Sort by date ascending for easier processing
-  const sortedDays = [...contributionDays].sort((a, b) => 
+  const sortedDays = [...contributionDays].sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
@@ -265,7 +265,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
     const day = uniqueDays[i];
     const dayDate = new Date(day.date);
     dayDate.setHours(0, 0, 0, 0);
-    
+
     // Check if this day is consecutive to the last day
     let isConsecutive = false;
     if (lastDate) {
@@ -273,7 +273,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
       expectedDate.setDate(expectedDate.getDate() + 1);
       isConsecutive = dayDate.getTime() === expectedDate.getTime();
     }
-    
+
     if (day.contributionCount > 0) {
       if (currentStreakCount === 0 || !isConsecutive) {
         // Start a new streak
@@ -350,9 +350,9 @@ function calculateRank(stats: {
   repos: number;
 }): { rank: string; percentile: number } {
   const { commits, prs, issues, stars, followers, repos } = stats;
-  
+
   // Weighted score calculation
-  const score = 
+  const score =
     commits * 1 +
     prs * 3 +
     issues * 2 +
@@ -377,7 +377,7 @@ function calculateLanguageStats(repositories: GitHubUser['repositories']['nodes'
 
   for (const repo of repositories) {
     if (repo.isFork) continue;
-    
+
     if (repo.primaryLanguage) {
       const existing = languageMap.get(repo.primaryLanguage.name);
       if (existing) {
@@ -392,7 +392,7 @@ function calculateLanguageStats(repositories: GitHubUser['repositories']['nodes'
   }
 
   const totalSize = Array.from(languageMap.values()).reduce((sum, lang) => sum + lang.size, 0);
-  
+
   const languages: LanguageStats[] = Array.from(languageMap.entries())
     .map(([name, { size, color }]) => ({
       name,
@@ -413,14 +413,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
   const cacheKey = username.toLowerCase();
   const cached = cache.get(cacheKey);
-  
+
   // Return cached data if valid
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
 
   const token = process.env.GITHUB_TOKEN;
-  
+
   if (!token) {
     throw new Error('GitHub token is not configured');
   }
@@ -466,29 +466,33 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
     // Get contribution years from API
     const currentYear = new Date().getFullYear();
     const years = user.contributionsCollection.contributionYears || [currentYear];
-    
+
     // For streak calculation, we need contribution days using NON-OVERLAPPING date ranges
-    // to avoid duplicate days. The rolling ~1-year window from the main query overlaps
-    // with the previous year, so we fetch current year (Jan 1 to today) and previous year
-    // (full calendar year) separately.
+    // to avoid duplicate days. We fetch all years of contributions to ensure the longest
+    // streak is accurately calculated across the user's entire history.
     let allContributionDays: ContributionDay[] = [];
-    
+
     try {
-      // Fetch current year (Jan 1 to today) for streak calculation
-      const currentYearDays = await fetchCurrentYearContributionDays(username, token);
-      allContributionDays = [...currentYearDays];
-      
-      // Fetch previous year if user has contributions in that year
-      if (years.includes(currentYear - 1)) {
-        const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
-        allContributionDays = [...allContributionDays, ...prevYearDays];
-      }
-    } catch {
+      // Fetch all years in parallel
+      const yearDaysResults = await Promise.all(
+        years.map(year => {
+          if (year === currentYear) {
+            return fetchCurrentYearContributionDays(username, token);
+          } else {
+            return fetchYearContributions(username, year, token);
+          }
+        })
+      );
+
+      // Flatten all days into a single array
+      allContributionDays = yearDaysResults.flat();
+    } catch (error) {
+      console.error('Error fetching historical contribution days:', error);
       // Fallback to rolling window data if fetching fails (less accurate but functional)
       allContributionDays = user.contributionsCollection.contributionCalendar.weeks
         .flatMap(week => week.contributionDays);
     }
-    
+
     // Use the rolling window data for the contribution graph display
     // (this is the expected behavior - shows last ~12 months of activity)
     const contributionDays = user.contributionsCollection.contributionCalendar.weeks
@@ -496,7 +500,7 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
 
     const streaks = calculateStreaks(allContributionDays);
     const languages = calculateLanguageStats(user.repositories.nodes);
-    
+
     // Calculate all-time contributions using NON-OVERLAPPING date ranges
     // to avoid double-counting that occurs when using the rolling ~1-year total.
     // 
@@ -506,19 +510,19 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
     // 1. Current year: Jan 1 to today (partial year)
     // 2. Past years: Full calendar years (Jan 1 - Dec 31)
     // This ensures no overlap and accurate lifetime totals.
-    
+
     let totalContributionsAllTime = 0;
-    
+
     // Get past years (full calendar years, excluding current year)
     const pastYears = years.filter(y => y < currentYear);
-    
+
     try {
       // Fetch current year (Jan 1 to today) and all past years in parallel
       const [currentYearTotal, ...pastYearTotals] = await Promise.all([
         fetchCurrentYearContributions(username, token),
         ...pastYears.map(year => fetchYearTotalContributions(username, year, token))
       ]);
-      
+
       totalContributionsAllTime = currentYearTotal + pastYearTotals.reduce((sum, total) => sum + total, 0);
     } catch {
       // Fallback to rolling total if fetching fails (less accurate but better than nothing)
