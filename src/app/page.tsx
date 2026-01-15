@@ -55,6 +55,7 @@ const Icons = {
 
 const themes = [
   { id: 'github_dark', name: 'GitHub Dark', bgColor: '#0d1117', accentColor: '#238636', textColor: '#e6edf3' },
+  { id: 'github_light', name: 'GitHub Light', bgColor: '#f6f8fa', accentColor: '#0969da', textColor: '#24292f',},
   { id: 'radical', name: 'Radical', bgColor: '#141321', accentColor: '#fe428e', textColor: '#a9fef7' },
   { id: 'tokyonight', name: 'Tokyo Night', bgColor: '#1a1b26', accentColor: '#70a5fd', textColor: '#38bdae' },
   { id: 'dracula', name: 'Dracula', bgColor: '#282a36', accentColor: '#ff79c6', textColor: '#f8f8f2' },
