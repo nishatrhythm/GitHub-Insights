@@ -24,7 +24,7 @@
 - 🔥 **Streak Tracking** - Current and longest contribution streaks with accurate consecutive day detection
 - 📈 **Contribution Graph** - Visual representation of your activity with monthly breakdowns
 - 🗣️ **Top Languages** - Most used programming languages with visual percentages
-- 🎨 **Multiple Themes** - 7 beautiful themes to choose from (GitHub Dark, Radical, Tokyo Night, Dracula, Synthwave, Ocean, Neo Green)
+- 🎨 **Multiple Themes** - 8 beautiful themes to choose from (GitHub Dark, GitHub Light, Radical, Tokyo Night, Dracula, Synthwave, Ocean, Neo Green)
 - 📥 **Download Options** - Export your stats card as SVG, PNG, or JPG directly from the UI
 - ⚡ **Fast & Optimized** - Edge runtime with intelligent caching for quick loads
 - 📱 **Responsive Design** - Looks great on any device with mobile-friendly interface
@@ -70,8 +70,7 @@ Replace `YOUR_USERNAME` with your GitHub username.
 
 | Theme | Preview |
 |-------|---------|
-| `github_dark` | ![GitHub Dark](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_dark&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `radical` | ![Radical](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=radical&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `github_dark` | ![GitHub Dark](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_dark&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) || `github_light` | ![GitHub Light](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_light&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) || `radical` | ![Radical](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=radical&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `tokyonight` | ![Tokyo Night](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=tokyonight&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `dracula` | ![Dracula](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=dracula&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 | `synthwave` | ![Synthwave](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=synthwave&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
