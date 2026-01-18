@@ -1,7 +1,7 @@
 <h1 align="center">GitHub Insights</h1>
 
 <p align="center">
-  <img src="https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_dark&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" alt="GitHub Insights" />
+  <img src="https://yourinsights.vercel.app/api/insight?username=mojombo&theme=github_dark&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" alt="GitHub Insights" />
 </p>
 
 <p align="center">
@@ -70,12 +70,14 @@ Replace `YOUR_USERNAME` with your GitHub username.
 
 | Theme | Preview |
 |-------|---------|
-| `github_dark` | ![GitHub Dark](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_dark&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) || `github_light` | ![GitHub Light](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=github_light&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) || `radical` | ![Radical](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=radical&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `tokyonight` | ![Tokyo Night](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=tokyonight&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `dracula` | ![Dracula](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=dracula&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `synthwave` | ![Synthwave](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=synthwave&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `ocean` | ![Ocean](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=ocean&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
-| `neo_green` | ![Neo Green](https://yourinsights.vercel.app/api/insight?username=nishatrhythm&theme=neo_green&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `github_dark` | ![GitHub Dark](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=github_dark&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `github_light` | ![GitHub Light](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=github_light&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `radical` | ![Radical](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=radical&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `tokyonight` | ![Tokyo Night](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=tokyonight&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `dracula` | ![Dracula](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=dracula&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `synthwave` | ![Synthwave](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=synthwave&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `ocean` | ![Ocean](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=ocean&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
+| `neo_green` | ![Neo Green](https://yourinsights.vercel.app/api/insight?username=mojombo&theme=neo_green&graph=false&languages=false&streak=false&stats=false&header=false&summary=false&profile=true) |
 
 ## Self-Hosting
 
