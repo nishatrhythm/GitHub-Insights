@@ -13,25 +13,13 @@ export interface GitHubUser {
 }
 
 export interface Repository {
-  name?: string;
   stargazerCount: number;
   forkCount: number;
-  isFork: boolean;
-
   primaryLanguage: {
     name: string;
     color: string;
   } | null;
-
-  languages?: {
-    edges: Array<{
-      size: number;
-      node: {
-        name: string;
-        color?: string;
-      };
-    }>;
-  };
+  isFork: boolean;
 }
 
 export interface ContributionsCollection {

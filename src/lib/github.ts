@@ -27,7 +27,7 @@ function computeMonthlyContributions(contributionDays: ContributionDay[]): Month
     });
 }
 
-export const USER_QUERY = `
+const USER_QUERY = `
 query($username: String!) {
   user(login: $username) {
     login
@@ -35,38 +35,23 @@ query($username: String!) {
     location
     followers { totalCount }
     createdAt
-
-    repositories(first: 100, ownerAffiliations: OWNER, privacy: PUBLIC) {
+    repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
       totalCount
       nodes {
-        name
         stargazerCount
         forkCount
-        isFork
-        
         primaryLanguage {
           name
           color
         }
-
-        languages(first: 10) {
-          edges {
-            size
-            node {
-              name
-              color
-            }
-          }
-        }
+        isFork
       }
     }
-
     contributionsCollection {
       totalCommitContributions
       totalIssueContributions
       totalPullRequestContributions
       totalRepositoryContributions
-
       contributionCalendar {
         totalContributions
         weeks {
@@ -76,7 +61,6 @@ query($username: String!) {
           }
         }
       }
-
       contributionYears
     }
   }
@@ -388,43 +372,21 @@ function calculateRank(stats: {
   return { rank: 'C', percentile: 100 };
 }
 
-function calculateLanguageStats(
-  repositories: GitHubUser['repositories']['nodes']
-): LanguageStats[] {
+function calculateLanguageStats(repositories: GitHubUser['repositories']['nodes']): LanguageStats[] {
   const languageMap = new Map<string, { size: number; color: string }>();
 
   for (const repo of repositories) {
     if (repo.isFork) continue;
 
     if (repo.primaryLanguage) {
-      const lang = repo.primaryLanguage;
-      const existing = languageMap.get(lang.name);
-
+      const existing = languageMap.get(repo.primaryLanguage.name);
       if (existing) {
-        existing.size += starWeight;
+        existing.size += repo.stargazerCount + 1; // Weight by stars
       } else {
-        languageMap.set(lang.name, {
-          size: starWeight,
-          color: lang.color ?? "#858585",
+        languageMap.set(repo.primaryLanguage.name, {
+          size: repo.stargazerCount + 1,
+          color: repo.primaryLanguage.color || '#858585',
         });
-      }
-    }
-
-    // Multi-language breakdown
-    if (repo.languages?.edges) {
-      for (const edge of repo.languages.edges) {
-        const lang = edge.node;
-        const weightedSize = edge.size * starWeight;
-
-        const existing = languageMap.get(lang.name);
-        if (existing) {
-          existing.size += weightedSize;
-        } else {
-          languageMap.set(lang.name, {
-            size: weightedSize,
-            color: lang.color || "#858585",
-          });
-        }
       }
     }
   }
@@ -439,7 +401,9 @@ function calculateLanguageStats(
       percentage: totalSize > 0 ? (size / totalSize) * 100 : 0,
     }))
     .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 8);
+    .slice(0, 8); // Top 8 languages
+
+  return languages;
 }
 
 // In-memory cache with stale-while-revalidate pattern
