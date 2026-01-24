@@ -8,9 +8,22 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, s-maxage=300, stale-while-revalidate=600"
+          "value": "public, max-age=1800, s-maxage=1800, stale-while-revalidate=3600"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "public, max-age=1800, stale-while-revalidate=3600"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "public, max-age=1800, stale-while-revalidate=3600"
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/insight/route.ts": {
+      "maxDuration": 10
+    }
+  }
 }

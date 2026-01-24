@@ -7,13 +7,13 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // Pre-compute monthly contributions from daily data
 function computeMonthlyContributions(contributionDays: ContributionDay[]): MonthlyContribution[] {
   const monthMap = new Map<string, number>();
-  
+
   for (const day of contributionDays) {
     const date = new Date(day.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + day.contributionCount);
   }
-  
+
   return Array.from(monthMap.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-12)
@@ -117,7 +117,7 @@ async function fetchYearContributions(username: string, year: number, token: str
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     console.error('GraphQL errors:', data.errors);
     return [];
@@ -156,7 +156,7 @@ async function fetchYearTotalContributions(username: string, year: number, token
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return 0;
   }
@@ -201,7 +201,7 @@ async function fetchCurrentYearContributionDays(username: string, token: string)
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return [];
   }
@@ -243,7 +243,7 @@ async function fetchCurrentYearContributions(username: string, token: string): P
   });
 
   const data = await response.json();
-  
+
   if (data.errors) {
     return 0;
   }
@@ -256,7 +256,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   if (!contributionDays.length) return { current: emptyStreak, longest: emptyStreak };
 
   // Sort by date ascending for easier processing
-  const sortedDays = [...contributionDays].sort((a, b) => 
+  const sortedDays = [...contributionDays].sort((a, b) =>
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
@@ -281,7 +281,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
     const day = uniqueDays[i];
     const dayDate = new Date(day.date);
     dayDate.setHours(0, 0, 0, 0);
-    
+
     // Check if this day is consecutive to the last day
     let isConsecutive = false;
     if (lastDate) {
@@ -289,7 +289,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
       expectedDate.setDate(expectedDate.getDate() + 1);
       isConsecutive = dayDate.getTime() === expectedDate.getTime();
     }
-    
+
     if (day.contributionCount > 0) {
       if (currentStreakCount === 0 || !isConsecutive) {
         // Start a new streak
@@ -366,9 +366,9 @@ function calculateRank(stats: {
   repos: number;
 }): { rank: string; percentile: number } {
   const { commits, prs, issues, stars, followers, repos } = stats;
-  
+
   // Weighted score calculation
-  const score = 
+  const score =
     commits * 1 +
     prs * 3 +
     issues * 2 +
@@ -396,9 +396,6 @@ function calculateLanguageStats(
   for (const repo of repositories) {
     if (repo.isFork) continue;
 
-    const starWeight = repo.stargazerCount + 1;
-
-    // Primary language weight
     if (repo.primaryLanguage) {
       const lang = repo.primaryLanguage;
       const existing = languageMap.get(lang.name);
@@ -432,12 +429,9 @@ function calculateLanguageStats(
     }
   }
 
-  const totalSize = Array.from(languageMap.values()).reduce(
-    (sum, lang) => sum + lang.size,
-    0
-  );
+  const totalSize = Array.from(languageMap.values()).reduce((sum, lang) => sum + lang.size, 0);
 
-  return Array.from(languageMap.entries())
+  const languages: LanguageStats[] = Array.from(languageMap.entries())
     .map(([name, { size, color }]) => ({
       name,
       color,
@@ -448,32 +442,53 @@ function calculateLanguageStats(
     .slice(0, 8);
 }
 
-// Simple in-memory cache
+// In-memory cache with stale-while-revalidate pattern
+// Note: On edge/serverless, this cache persists only within a warm instance
+// The primary caching happens at the CDN level via Cache-Control headers
 const cache = new Map<string, { data: GitHubStats; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes - fresh data
+const STALE_TTL = 60 * 60 * 1000; // 60 minutes - serve stale while revalidating
 
-export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
-  const cacheKey = username.toLowerCase();
-  const cached = cache.get(cacheKey);
-  
-  // Return cached data if valid
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
-  }
+// Track ongoing revalidation requests to prevent duplicate fetches
+const revalidationInProgress = new Set<string>();
 
-  const token = process.env.GITHUB_TOKEN;
-  
-  if (!token) {
-    throw new Error('GitHub token is not configured');
-  }
+// Fast fetch with aggressive timeout for GitHub's 4-second Camo proxy limit
+// We need to return SOMETHING within 4 seconds or GitHub shows broken image
+const FAST_TIMEOUT = 3000; // 3 seconds for main data (leaves buffer for response)
+const EXTENDED_TIMEOUT = 6000; // 6 seconds for background revalidation
 
-  // Create abort controller with 8 second timeout
+/**
+ * Fetch with timeout helper - critical for meeting GitHub Camo's 4s limit
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout: number
+): Promise<Response> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
   try {
-    // Fetch main user data
-    const response = await fetch(GITHUB_GRAPHQL_API, {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/**
+ * Fast path: Fetch only essential data needed for a basic card
+ * This prioritizes speed over completeness to meet GitHub's timeout
+ */
+async function fetchEssentialStats(username: string, token: string): Promise<GitHubStats> {
+  const response = await fetchWithTimeout(
+    GITHUB_GRAPHQL_API,
+    {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -483,126 +498,203 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
         query: USER_QUERY,
         variables: { username },
       }),
-      signal: controller.signal,
-    });
+    },
+    FAST_TIMEOUT
+  );
 
-    clearTimeout(timeoutId);
+  const data = await response.json();
 
-    const data = await response.json();
+  if (data.errors) {
+    console.error('GraphQL errors:', data.errors);
+    throw new Error(data.errors[0]?.message || 'Failed to fetch GitHub data');
+  }
 
-    if (data.errors) {
-      console.error('GraphQL errors:', data.errors);
-      throw new Error(data.errors[0]?.message || 'Failed to fetch GitHub data');
-    }
+  if (!data.data?.user) {
+    throw new Error(`User "${username}" not found`);
+  }
 
-    if (!data.data?.user) {
-      throw new Error(`User "${username}" not found`);
-    }
+  const user: GitHubUser = data.data.user;
 
-    const user: GitHubUser = data.data.user;
+  // Calculate totals from main query (no additional API calls needed)
+  const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
+  const totalForks = user.repositories.nodes.reduce((sum, repo) => sum + repo.forkCount, 0);
 
-    // Calculate totals
-    const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
-    const totalForks = user.repositories.nodes.reduce((sum, repo) => sum + repo.forkCount, 0);
+  // Use rolling window data for contribution graph (already in response)
+  const contributionDays = user.contributionsCollection.contributionCalendar.weeks
+    .flatMap(week => week.contributionDays);
 
-    // Get contribution years from API
-    const currentYear = new Date().getFullYear();
-    const years = user.contributionsCollection.contributionYears || [currentYear];
-    
-    // For streak calculation, we need contribution days using NON-OVERLAPPING date ranges
-    // to avoid duplicate days. The rolling ~1-year window from the main query overlaps
-    // with the previous year, so we fetch current year (Jan 1 to today) and previous year
-    // (full calendar year) separately.
-    let allContributionDays: ContributionDay[] = [];
-    
+  // Calculate streaks from available data (rolling ~1 year)
+  const streaks = calculateStreaks(contributionDays);
+  const languages = calculateLanguageStats(user.repositories.nodes);
+
+  const { rank, percentile } = calculateRank({
+    commits: user.contributionsCollection.totalCommitContributions,
+    prs: user.contributionsCollection.totalPullRequestContributions,
+    issues: user.contributionsCollection.totalIssueContributions,
+    stars: totalStars,
+    followers: user.followers.totalCount,
+    repos: user.repositories.totalCount,
+  });
+
+  // Use the rolling total as estimate (accurate enough for display)
+  // The all-time total will be fetched in background if needed
+  const totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
+
+  return {
+    user,
+    totalStars,
+    totalForks,
+    totalCommits: user.contributionsCollection.totalCommitContributions,
+    totalPRs: user.contributionsCollection.totalPullRequestContributions,
+    totalIssues: user.contributionsCollection.totalIssueContributions,
+    totalContributions: user.contributionsCollection.contributionCalendar.totalContributions,
+    totalContributionsAllTime,
+    contributedRepos: user.contributionsCollection.totalRepositoryContributions,
+    languages,
+    currentStreak: streaks.current,
+    longestStreak: streaks.longest,
+    accountCreatedAt: user.createdAt,
+    contributionData: contributionDays,
+    monthlyContributions: computeMonthlyContributions(contributionDays),
+    rank,
+    rankPercentile: percentile,
+  };
+}
+
+/**
+ * Full fetch: Gets complete historical data (may be slow)
+ * Used for background revalidation
+ */
+async function fetchFullStats(username: string, token: string): Promise<GitHubStats> {
+  // Start with essential stats
+  const baseStats = await fetchEssentialStats(username, token);
+  const user = baseStats.user;
+  
+  const currentYear = new Date().getFullYear();
+  const years = user.contributionsCollection.contributionYears || [currentYear];
+
+  // Fetch historical data for more accurate streaks (only if multiple years)
+  let allContributionDays = baseStats.contributionData;
+  let totalContributionsAllTime = baseStats.totalContributionsAllTime;
+
+  if (years.length > 1) {
     try {
-      // Fetch current year (Jan 1 to today) for streak calculation
-      const currentYearDays = await fetchCurrentYearContributionDays(username, token);
-      allContributionDays = [...currentYearDays];
-      
-      // Fetch previous year if user has contributions in that year
-      if (years.includes(currentYear - 1)) {
-        const prevYearDays = await fetchYearContributions(username, currentYear - 1, token);
-        allContributionDays = [...allContributionDays, ...prevYearDays];
-      }
-    } catch {
-      // Fallback to rolling window data if fetching fails (less accurate but functional)
-      allContributionDays = user.contributionsCollection.contributionCalendar.weeks
-        .flatMap(week => week.contributionDays);
-    }
-    
-    // Use the rolling window data for the contribution graph display
-    // (this is the expected behavior - shows last ~12 months of activity)
-    const contributionDays = user.contributionsCollection.contributionCalendar.weeks
-      .flatMap(week => week.contributionDays);
+      // Fetch all years in parallel with extended timeout
+      const yearDaysResults = await Promise.all(
+        years.map(year => {
+          if (year === currentYear) {
+            return fetchCurrentYearContributionDays(username, token);
+          } else {
+            return fetchYearContributions(username, year, token);
+          }
+        })
+      );
 
-    const streaks = calculateStreaks(allContributionDays);
-    const languages = calculateLanguageStats(user.repositories.nodes);
-    
-    // Calculate all-time contributions using NON-OVERLAPPING date ranges
-    // to avoid double-counting that occurs when using the rolling ~1-year total.
-    // 
-    // The rolling total from contributionCalendar.totalContributions covers
-    // approximately the last 365 days, which overlaps with part of the previous year.
-    // Instead, we fetch:
-    // 1. Current year: Jan 1 to today (partial year)
-    // 2. Past years: Full calendar years (Jan 1 - Dec 31)
-    // This ensures no overlap and accurate lifetime totals.
-    
-    let totalContributionsAllTime = 0;
-    
-    // Get past years (full calendar years, excluding current year)
-    const pastYears = years.filter(y => y < currentYear);
-    
-    try {
-      // Fetch current year (Jan 1 to today) and all past years in parallel
+      allContributionDays = yearDaysResults.flat();
+
+      // Calculate accurate all-time contributions
+      const pastYears = years.filter(y => y < currentYear);
       const [currentYearTotal, ...pastYearTotals] = await Promise.all([
         fetchCurrentYearContributions(username, token),
         ...pastYears.map(year => fetchYearTotalContributions(username, year, token))
       ]);
-      
+
       totalContributionsAllTime = currentYearTotal + pastYearTotals.reduce((sum, total) => sum + total, 0);
-    } catch {
-      // Fallback to rolling total if fetching fails (less accurate but better than nothing)
-      totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
+    } catch (error) {
+      console.error('Error fetching historical data, using rolling data:', error);
+      // Keep using the rolling data from baseStats
     }
+  }
 
-    const { rank, percentile } = calculateRank({
-      commits: user.contributionsCollection.totalCommitContributions,
-      prs: user.contributionsCollection.totalPullRequestContributions,
-      issues: user.contributionsCollection.totalIssueContributions,
-      stars: totalStars,
-      followers: user.followers.totalCount,
-      repos: user.repositories.totalCount,
-    });
+  // Recalculate streaks with full history
+  const streaks = calculateStreaks(allContributionDays);
 
-    const result: GitHubStats = {
-      user,
-      totalStars,
-      totalForks,
-      totalCommits: user.contributionsCollection.totalCommitContributions,
-      totalPRs: user.contributionsCollection.totalPullRequestContributions,
-      totalIssues: user.contributionsCollection.totalIssueContributions,
-      totalContributions: user.contributionsCollection.contributionCalendar.totalContributions,
-      totalContributionsAllTime,
-      contributedRepos: user.contributionsCollection.totalRepositoryContributions,
-      languages,
-      currentStreak: streaks.current,
-      longestStreak: streaks.longest,
-      accountCreatedAt: user.createdAt,
-      contributionData: contributionDays,
-      monthlyContributions: computeMonthlyContributions(contributionDays),
-      rank,
-      rankPercentile: percentile,
-    };
+  return {
+    ...baseStats,
+    currentStreak: streaks.current,
+    longestStreak: streaks.longest,
+    totalContributionsAllTime,
+    contributionData: baseStats.contributionData, // Keep rolling data for graph
+  };
+}
+
+export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
+  const cacheKey = username.toLowerCase();
+  const cached = cache.get(cacheKey);
+  const now = Date.now();
+
+  // Return fresh cached data immediately
+  if (cached && now - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  // Return stale data immediately while revalidating in background
+  // This is the KEY fix for GitHub's Camo timeout issue
+  if (cached && now - cached.timestamp < STALE_TTL) {
+    // Trigger background revalidation if not already in progress
+    if (!revalidationInProgress.has(cacheKey)) {
+      revalidationInProgress.add(cacheKey);
+      
+      // Fire and forget - don't await
+      fetchAndCacheStats(username, cacheKey, true).finally(() => {
+        revalidationInProgress.delete(cacheKey);
+      });
+    }
+    
+    // Return stale data immediately (fast response!)
+    return cached.data;
+  }
+
+  // No cache available - must fetch fresh data
+  return fetchAndCacheStats(username, cacheKey, false);
+}
+
+async function fetchAndCacheStats(
+  username: string,
+  cacheKey: string,
+  isBackgroundRevalidation: boolean
+): Promise<GitHubStats> {
+  const token = process.env.GITHUB_TOKEN;
+
+  if (!token) {
+    throw new Error('GitHub token is not configured');
+  }
+
+  try {
+    let result: GitHubStats;
+
+    if (isBackgroundRevalidation) {
+      // Background: Can take more time, fetch full data
+      result = await fetchFullStats(username, token);
+    } else {
+      // Foreground: Must be fast! Use essential-only fetch
+      // Then trigger background fetch for full data
+      result = await fetchEssentialStats(username, token);
+      
+      // Queue background fetch for full data (non-blocking)
+      if (!revalidationInProgress.has(cacheKey + '_full')) {
+        revalidationInProgress.add(cacheKey + '_full');
+        fetchFullStats(username, token)
+          .then(fullResult => {
+            cache.set(cacheKey, { data: fullResult, timestamp: Date.now() });
+          })
+          .catch(err => console.error('Background full fetch failed:', err))
+          .finally(() => revalidationInProgress.delete(cacheKey + '_full'));
+      }
+    }
 
     // Cache the result
     cache.set(cacheKey, { data: result, timestamp: Date.now() });
-
     return result;
 
   } catch (error) {
-    clearTimeout(timeoutId);
+    // If we have stale data and the fetch failed, return stale data
+    const staleData = cache.get(cacheKey);
+    if (staleData) {
+      console.warn('Fetch failed, returning stale data:', error);
+      return staleData.data;
+    }
+
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Request timed out - GitHub API is slow');
     }

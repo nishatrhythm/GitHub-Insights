@@ -378,7 +378,7 @@ function renderStatsCard(
   startY: number,
   startX: number = 40
 ): { svg: string; height: number } {
-  const { totalStars, totalCommits, totalPRs, totalIssues, contributedRepos } =
+  const { totalStars, totalContributions, totalPRs, totalIssues, contributedRepos } =
     stats;
   const { grade, color: gradeColor } = calculateGrade(stats);
 
@@ -391,25 +391,25 @@ function renderStatsCard(
     },
     {
       icon: "commit" as const,
-      label: "Total Commits",
-      value: totalCommits,
+      label: "Contributions (12mo)",
+      value: totalContributions,
       color: "#34d399",
     },
     {
       icon: "pr" as const,
-      label: "Total Pull Requests",
+      label: "Pull Requests (12mo)",
       value: totalPRs,
       color: "#a78bfa",
     },
     {
       icon: "issue" as const,
-      label: "Total Issues",
+      label: "Issues (12mo)",
       value: totalIssues,
       color: "#f472b6",
     },
     {
       icon: "fork" as const,
-      label: "Contributed To",
+      label: "Contributed To (12mo)",
       value: contributedRepos,
       color: "#60a5fa",
     },
