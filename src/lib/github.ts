@@ -51,7 +51,7 @@ query($username: String!) {
     location
     followers { totalCount }
     createdAt
-    repositories(first: 100, ownerAffiliations: OWNER, isFork: false, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
+    repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
       totalCount
       nodes {
         stargazerCount
