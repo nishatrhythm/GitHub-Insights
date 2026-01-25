@@ -8,6 +8,7 @@ export interface GitHubUser {
     totalCount: number;
     nodes: Repository[];
   };
+  pullRequests?: { totalCount: number };
   contributionsCollection: ContributionsCollection;
   createdAt: string;
 }
@@ -20,12 +21,22 @@ export interface Repository {
     color: string;
   } | null;
   isFork: boolean;
+  languages?: {
+    edges: Array<{
+      size: number;
+      node: {
+        name: string;
+        color: string;
+      };
+    }>;
+  };
 }
 
 export interface ContributionsCollection {
   totalCommitContributions: number;
   totalIssueContributions: number;
   totalPullRequestContributions: number;
+  totalPullRequestReviewContributions?: number;
   totalRepositoryContributions: number;
   contributionCalendar: ContributionCalendar;
   contributionYears: number[];

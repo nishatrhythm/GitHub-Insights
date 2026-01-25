@@ -103,51 +103,31 @@ function getYearsAgo(dateStr: string): string {
   return `${years} year${years !== 1 ? "s" : ""} ago`;
 }
 
+/**
+ * Gets the grade color based on the rank level from github-readme-stats algorithm.
+ * Rank levels: S, A+, A, A-, B+, B, B-, C+, C
+ * Based on Japanese academic grading system.
+ */
+function getGradeColor(rank: string): string {
+  const gradeColors: Record<string, string> = {
+    'S': '#fbbf24',   // Gold - Top 1%
+    'A+': '#10b981',  // Emerald - Top 12.5%
+    'A': '#34d399',   // Green - Top 25%
+    'A-': '#6ee7b7',  // Light Green - Top 37.5%
+    'B+': '#60a5fa',  // Blue - Top 50%
+    'B': '#93c5fd',   // Light Blue - Top 62.5%
+    'B-': '#a78bfa',  // Purple - Top 75%
+    'C+': '#c4b5fd',  // Light Purple - Top 87.5%
+    'C': '#9ca3af',   // Gray - Everyone else
+  };
+  return gradeColors[rank] || '#9ca3af';
+}
+
 function calculateGrade(stats: GitHubStats): { grade: string; color: string } {
-  const {
-    totalStars,
-    totalCommits,
-    totalPRs,
-    totalIssues,
-    contributedRepos,
-    user,
-  } = stats;
-
-  // Calculate score based on various metrics
-  let score = 0;
-
-  // 1 point for every 5 commits. Full 30 points if you have 150 commits.
-  score += Math.min(30, totalCommits * 0.2);
-
-  // 1 PR = 2.5 points. Full 25 points if you have 10 PRs.
-  score += Math.min(25, totalPRs * 2.5);
-
-  // 1 star = 0.4 points. 50 stars = 20 points.
-  score += Math.min(20, totalStars * 0.4);
-
-  // 1 issue = 1 point. 10 issues = 10 points.
-  score += Math.min(10, totalIssues * 1.0);
-
-  // Stars & Followers & Repos: Profile Value (Max 15)
-  const followersBonus = user?.followers?.totalCount * 0.2; // 1 point for every 5 followers
-  const repoBonus = contributedRepos * 1.0; // 1 point for every repo
-  score += Math.min(15, followersBonus + repoBonus);
-
-  // Grade Mapping
-  const gradeThresholds = [
-    { threshold: 85, grade: "S+", color: "#fbbf24" },
-    { threshold: 75, grade: "S", color: "#f59e0b" },
-    { threshold: 65, grade: "A++", color: "#10b981" },
-    { threshold: 55, grade: "A+", color: "#34d399" },
-    { threshold: 45, grade: "A", color: "#6ee7b7" },
-    { threshold: 35, grade: "B+", color: "#60a5fa" },
-    { threshold: 25, grade: "B", color: "#93c5fd" },
-    { threshold: 15, grade: "C", color: "#a78bfa" },
-    { threshold: 0, grade: "D", color: "#9ca3af" },
-  ];
-
-  const result = gradeThresholds?.find((g) => score >= g?.threshold);
-  return { grade: result?.grade ?? "D", color: result?.color ?? "#9ca3af" };
+  // Use the pre-calculated rank from github-readme-stats algorithm
+  const grade = stats.rank;
+  const color = getGradeColor(grade);
+  return { grade, color };
 }
 
 function renderHeaderSection(

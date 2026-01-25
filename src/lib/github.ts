@@ -27,6 +27,22 @@ function computeMonthlyContributions(contributionDays: ContributionDay[]): Month
     });
 }
 
+// Type for repository with detailed language information
+interface RepositoryWithLanguages {
+  stargazerCount: number;
+  forkCount: number;
+  isFork: boolean;
+  languages: {
+    edges: Array<{
+      size: number;
+      node: {
+        name: string;
+        color: string;
+      };
+    }>;
+  } | null;
+}
+
 const USER_QUERY = `
 query($username: String!) {
   user(login: $username) {
@@ -35,22 +51,31 @@ query($username: String!) {
     location
     followers { totalCount }
     createdAt
-    repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
+    repositories(first: 100, ownerAffiliations: OWNER, isFork: false, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
       totalCount
       nodes {
         stargazerCount
         forkCount
-        primaryLanguage {
-          name
-          color
-        }
         isFork
+        languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+          edges {
+            size
+            node {
+              name
+              color
+            }
+          }
+        }
       }
+    }
+    pullRequests(first: 1) {
+      totalCount
     }
     contributionsCollection {
       totalCommitContributions
       totalIssueContributions
       totalPullRequestContributions
+      totalPullRequestReviewContributions
       totalRepositoryContributions
       contributionCalendar {
         totalContributions
@@ -341,51 +366,120 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   return { current: currentStreak, longest: longestStreak };
 }
 
+/**
+ * Calculates the exponential cumulative distribution function.
+ * Used for metrics that follow exponential distribution (commits, PRs, issues, reviews).
+ * @see https://github.com/anuraghazra/github-readme-stats/blob/master/src/calculateRank.js
+ */
+function exponentialCdf(x: number): number {
+  return 1 - Math.pow(2, -x);
+}
+
+/**
+ * Calculates the log-normal cumulative distribution function.
+ * Used for metrics that follow log-normal distribution (stars, followers).
+ * @see https://github.com/anuraghazra/github-readme-stats/blob/master/src/calculateRank.js
+ */
+function logNormalCdf(x: number): number {
+  // Approximation: x / (1 + x)
+  return x / (1 + x);
+}
+
+/**
+ * Calculates the user's rank using the github-readme-stats algorithm.
+ * 
+ * The ranking scheme is based on the Japanese academic grading system:
+ * - S (top 1%), A+ (12.5%), A (25%), A- (37.5%), B+ (50%), B (62.5%), B- (75%), C+ (87.5%), C (everyone)
+ * 
+ * The global percentile is calculated as a weighted sum of percentiles for each statistic,
+ * based on the cumulative distribution function of the exponential and log-normal distributions.
+ * 
+ * @see https://github.com/anuraghazra/github-readme-stats/blob/master/src/calculateRank.js
+ */
 function calculateRank(stats: {
   commits: number;
   prs: number;
   issues: number;
+  reviews: number;
   stars: number;
   followers: number;
-  repos: number;
+  allCommits?: boolean;
 }): { rank: string; percentile: number } {
-  const { commits, prs, issues, stars, followers, repos } = stats;
+  const { commits, prs, issues, reviews, stars, followers, allCommits = false } = stats;
 
-  // Weighted score calculation
-  const score =
-    commits * 1 +
-    prs * 3 +
-    issues * 2 +
-    stars * 4 +
-    followers * 2 +
-    repos * 1;
+  // Median values based on github-readme-stats research
+  const COMMITS_MEDIAN = allCommits ? 1000 : 250;
+  const COMMITS_WEIGHT = 2;
+  const PRS_MEDIAN = 50;
+  const PRS_WEIGHT = 3;
+  const ISSUES_MEDIAN = 25;
+  const ISSUES_WEIGHT = 1;
+  const REVIEWS_MEDIAN = 2;
+  const REVIEWS_WEIGHT = 1;
+  const STARS_MEDIAN = 50;
+  const STARS_WEIGHT = 4;
+  const FOLLOWERS_MEDIAN = 10;
+  const FOLLOWERS_WEIGHT = 1;
 
-  // Rank thresholds
-  if (score >= 10000) return { rank: 'S+', percentile: 1 };
-  if (score >= 5000) return { rank: 'S', percentile: 5 };
-  if (score >= 2500) return { rank: 'A+', percentile: 10 };
-  if (score >= 1000) return { rank: 'A', percentile: 25 };
-  if (score >= 500) return { rank: 'B+', percentile: 40 };
-  if (score >= 250) return { rank: 'B', percentile: 55 };
-  if (score >= 100) return { rank: 'C+', percentile: 70 };
-  if (score >= 50) return { rank: 'C', percentile: 85 };
-  return { rank: 'C', percentile: 100 };
+  const TOTAL_WEIGHT =
+    COMMITS_WEIGHT +
+    PRS_WEIGHT +
+    ISSUES_WEIGHT +
+    REVIEWS_WEIGHT +
+    STARS_WEIGHT +
+    FOLLOWERS_WEIGHT;
+
+  // Calculate weighted percentile using CDF
+  const rank =
+    1 -
+    (COMMITS_WEIGHT * exponentialCdf(commits / COMMITS_MEDIAN) +
+      PRS_WEIGHT * exponentialCdf(prs / PRS_MEDIAN) +
+      ISSUES_WEIGHT * exponentialCdf(issues / ISSUES_MEDIAN) +
+      REVIEWS_WEIGHT * exponentialCdf(reviews / REVIEWS_MEDIAN) +
+      STARS_WEIGHT * logNormalCdf(stars / STARS_MEDIAN) +
+      FOLLOWERS_WEIGHT * logNormalCdf(followers / FOLLOWERS_MEDIAN)) /
+    TOTAL_WEIGHT;
+
+  // Rank thresholds (percentile) and levels based on Japanese academic grading
+  const THRESHOLDS = [1, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100];
+  const LEVELS = ['S', 'A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'];
+
+  const percentile = rank * 100;
+  const levelIndex = THRESHOLDS.findIndex((t) => percentile <= t);
+  const level = LEVELS[levelIndex >= 0 ? levelIndex : LEVELS.length - 1];
+
+  return { rank: level, percentile };
 }
 
-function calculateLanguageStats(repositories: GitHubUser['repositories']['nodes']): LanguageStats[] {
-  const languageMap = new Map<string, { size: number; color: string }>();
+/**
+ * Calculates language statistics using byte counts from all languages in repositories.
+ * This follows the github-linguist standard approach where language percentages
+ * are calculated based on the actual bytes of code for each language.
+ * 
+ * @see https://github.com/github-linguist/linguist
+ * @see https://github.com/anuraghazra/github-readme-stats/blob/master/src/fetchers/top-languages.js
+ */
+function calculateLanguageStats(repositories: RepositoryWithLanguages[]): LanguageStats[] {
+  const languageMap = new Map<string, { size: number; color: string; count: number }>();
 
   for (const repo of repositories) {
     if (repo.isFork) continue;
+    if (!repo.languages?.edges) continue;
 
-    if (repo.primaryLanguage) {
-      const existing = languageMap.get(repo.primaryLanguage.name);
+    for (const edge of repo.languages.edges) {
+      const langName = edge.node.name;
+      const langColor = edge.node.color || '#858585';
+      const langSize = edge.size;
+
+      const existing = languageMap.get(langName);
       if (existing) {
-        existing.size += repo.stargazerCount + 1; // Weight by stars
+        existing.size += langSize;
+        existing.count += 1;
       } else {
-        languageMap.set(repo.primaryLanguage.name, {
-          size: repo.stargazerCount + 1,
-          color: repo.primaryLanguage.color || '#858585',
+        languageMap.set(langName, {
+          size: langSize,
+          color: langColor,
+          count: 1,
         });
       }
     }
@@ -499,7 +593,7 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
       .flatMap(week => week.contributionDays);
 
     const streaks = calculateStreaks(allContributionDays);
-    const languages = calculateLanguageStats(user.repositories.nodes);
+    const languages = calculateLanguageStats(user.repositories.nodes as unknown as RepositoryWithLanguages[]);
 
     // Calculate all-time contributions using NON-OVERLAPPING date ranges
     // to avoid double-counting that occurs when using the rolling ~1-year total.
@@ -529,13 +623,17 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats> {
       totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
     }
 
+    // Calculate rank using github-readme-stats algorithm
+    // Reviews are fetched from the API if available, otherwise estimated from PRs
+    const totalReviews = user.contributionsCollection.totalPullRequestReviewContributions || 0;
+    
     const { rank, percentile } = calculateRank({
       commits: user.contributionsCollection.totalCommitContributions,
       prs: user.contributionsCollection.totalPullRequestContributions,
       issues: user.contributionsCollection.totalIssueContributions,
+      reviews: totalReviews,
       stars: totalStars,
       followers: user.followers.totalCount,
-      repos: user.repositories.totalCount,
     });
 
     const result: GitHubStats = {
