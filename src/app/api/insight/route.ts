@@ -3,7 +3,6 @@ import { fetchGitHubStats } from '@/lib/github';
 import { generateInsightCard } from '@/lib/card-generator';
 import { getTheme } from '@/lib/themes';
 
-// Use edge runtime for faster cold starts (critical for GitHub's 4s timeout)
 export const runtime = 'edge';
 export const preferredRegion = 'auto';
 

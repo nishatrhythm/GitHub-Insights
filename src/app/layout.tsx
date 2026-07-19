@@ -37,7 +37,7 @@ export default function RootLayout({
             }
           }
         `}} />
-        {/* Blocking script to prevent flash of wrong theme */}
+        
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {

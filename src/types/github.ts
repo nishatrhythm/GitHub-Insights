@@ -1,4 +1,3 @@
-// GitHub API Types
 export interface GitHubUser {
   login: string;
   name: string | null;

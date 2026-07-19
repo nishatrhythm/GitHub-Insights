@@ -103,28 +103,22 @@ function getYearsAgo(dateStr: string): string {
   return `${years} year${years !== 1 ? "s" : ""} ago`;
 }
 
-/**
- * Gets the grade color based on the rank level from github-readme-stats algorithm.
- * Rank levels: S, A+, A, A-, B+, B, B-, C+, C
- * Based on Japanese academic grading system.
- */
 function getGradeColor(rank: string): string {
   const gradeColors: Record<string, string> = {
-    'S': '#fbbf24',   // Gold - Top 1%
-    'A+': '#10b981',  // Emerald - Top 12.5%
-    'A': '#34d399',   // Green - Top 25%
-    'A-': '#6ee7b7',  // Light Green - Top 37.5%
-    'B+': '#60a5fa',  // Blue - Top 50%
-    'B': '#93c5fd',   // Light Blue - Top 62.5%
-    'B-': '#a78bfa',  // Purple - Top 75%
-    'C+': '#c4b5fd',  // Light Purple - Top 87.5%
-    'C': '#9ca3af',   // Gray - Everyone else
+    'S': '#fbbf24',
+    'A+': '#10b981',
+    'A': '#34d399',
+    'A-': '#6ee7b7',
+    'B+': '#60a5fa',
+    'B': '#93c5fd',
+    'B-': '#a78bfa',
+    'C+': '#c4b5fd',
+    'C': '#9ca3af',
   };
   return gradeColors[rank] || '#9ca3af';
 }
 
 function calculateGrade(stats: GitHubStats): { grade: string; color: string } {
-  // Use the pre-calculated rank from github-readme-stats algorithm
   const grade = stats.rank;
   const color = getGradeColor(grade);
   return { grade, color };
@@ -147,27 +141,22 @@ function renderHeaderSection(
   const login = escapeHtml(user.login);
   const location = user.location ? escapeHtml(user.location) : "";
 
-  // GitHub's contribution calendar shows approximately the last 365-366 days (rolling year)
-  // not a calendar year, so we should label it as "the last 12 months" for accuracy
   const contributionPeriodLabel = "the last 12 months";
 
   const showProfile = options.showProfile !== false;
   const showSummary = options.showSummary !== false;
   const showHeader = options.showHeader !== false;
 
-  // If nothing is shown, return empty
   if (!showProfile && !showSummary && !showHeader) {
     return { svg: "", height: 0 };
   }
 
-  // Use pre-computed monthly data
   const monthlyData = monthlyContributions;
 
   const graphWidth = 280;
   const graphHeight = 90;
   const maxCount = Math.max(...monthlyData.map((d) => d.count), 1);
 
-  // Build paths using array for better performance
   const areaPoints: string[] = [`M 0 ${graphHeight}`];
   const linePoints: string[] = [];
 
@@ -182,7 +171,6 @@ function renderHeaderSection(
   const areaPath = areaPoints.join(" ");
   const linePath = linePoints.join(" ");
 
-  // Profile section (name & username)
   const profileSvg = showProfile
     ? `
       <g transform="translate(${cardWidth / 2}, 0)">
@@ -202,7 +190,6 @@ function renderHeaderSection(
 
   const profileHeight = showProfile ? 50 : 0;
 
-  // Calculate summary section
   const summaryRows = showSummary
     ? [
         {
@@ -229,19 +216,12 @@ function renderHeaderSection(
   const summaryHeight = showSummary ? summaryRows.length * 32 : 0;
   const headerChartHeight = showHeader ? 120 : 0;
 
-  // Determine if we need side-by-side layout
   const showBothSummaryAndHeader = showSummary && showHeader;
   const summaryStartY = profileHeight + (showProfile ? 32 : 0);
 
-  // Summary section SVG
   const summarySvg = showSummary
     ? `
-      <!-- Profile Stats - ${
-        showBothSummaryAndHeader ? "Left aligned" : "Centered"
-      } -->
-      <g transform="translate(${
-        showBothSummaryAndHeader ? 48 : (cardWidth - 320) / 2
-      }, ${summaryStartY})">
+      <g transform="translate(${showBothSummaryAndHeader ? 48 : (cardWidth - 320) / 2}, ${summaryStartY})">
         ${summaryRows
           .map(
             (row, index) => `
@@ -266,10 +246,8 @@ function renderHeaderSection(
   `
     : "";
 
-  // Header chart SVG
   const headerChartSvg = showHeader
     ? `
-      <!-- Contribution Area Graph -->
       <g transform="translate(${
         showBothSummaryAndHeader
           ? cardWidth - graphWidth - 80
@@ -283,7 +261,6 @@ function renderHeaderSection(
           Monthly Contributions (Last 12 Months)
         </text>
         
-        <!-- Y-axis labels -->
         <g transform="translate(${graphWidth + 10}, 0)">
           <text y="10" font-size="9" fill="${
             theme.textSecondary
@@ -312,7 +289,6 @@ function renderHeaderSection(
         theme.accent
       }" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         
-        <!-- X-axis labels -->
         <g transform="translate(0, ${graphHeight + 14})">
           ${monthlyData
             .filter((_, i) => i % 4 === 0 || i === monthlyData.length - 1)
@@ -332,7 +308,6 @@ function renderHeaderSection(
   `
     : "";
 
-  // Calculate total height
   const contentHeight = showBothSummaryAndHeader
     ? Math.max(summaryHeight, headerChartHeight)
     : summaryHeight + headerChartHeight;
@@ -341,7 +316,6 @@ function renderHeaderSection(
     profileHeight + (showProfile ? 32 : 0) + contentHeight + 10;
 
   const svg = `
-    <!-- Header Section -->
     <g transform="translate(0, ${startY})">
       ${profileSvg}
       ${summarySvg}
@@ -395,7 +369,6 @@ function renderStatsCard(
     },
   ];
 
-  // Build stats items using array.join() for better performance
   const statsSvgParts = statItems.map((item, index) => {
     const y = index * 27;
     return `<g transform="translate(0, ${y})">${renderIcon(
@@ -458,7 +431,6 @@ function renderLanguagesCard(
   const barHeight = 12;
   const borderRadius = 6;
 
-  // Calculate widths and create clip path for proper rounding
   let currentX = 0;
   const segments: { x: number; width: number; color: string }[] = [];
 
@@ -467,7 +439,6 @@ function renderLanguagesCard(
     (lang) => (lang.percentage / 100) * barWidth > 0.5
   );
 
-  // Calculate total percentage to normalize
   const totalPercentage = validLangs.reduce(
     (sum, lang) => sum + lang.percentage,
     0
@@ -483,7 +454,6 @@ function renderLanguagesCard(
     currentX += actualWidth;
   }
 
-  // Build using array.join() for better performance
   const segmentsSvg = segments
     .map(
       (seg) =>
@@ -573,9 +543,7 @@ function renderStreakSection(
   const cardWidth3 = (innerCardWidth - 32) / 3;
 
   const svg = `
-    <!-- Streak Section -->
     <g transform="translate(40, ${startY})">
-      <!-- Total Contributions Card -->
       <g transform="translate(0, 0)">
         <rect x="0" y="0" width="${cardWidth3}" height="140" rx="14" fill="${
     theme.cardBackground
@@ -608,13 +576,11 @@ function renderStreakSection(
         </text>
       </g>
       
-      <!-- Current Streak Card -->
       <g transform="translate(${cardWidth3 + 16}, 0)">
         <rect x="0" y="0" width="${cardWidth3}" height="140" rx="14" fill="${
     theme.cardBackground
   }" stroke="${theme.border}" stroke-width="1"/>
         
-        <!-- Circle Progress with fire icon on edge -->
         <g transform="translate(${cardWidth3 / 2}, 58)">
           <circle cx="0" cy="0" r="${circleRadius}" fill="none" stroke="${
     theme.border
@@ -631,7 +597,6 @@ function renderStreakSection(
                   }"
                   transform="rotate(-90)"
                   stroke-linecap="round"/>
-          <!-- Fire icon positioned at top edge of circle - no background -->
           <g transform="translate(-10, ${-circleRadius - 10})">
             ${renderIcon("fire", 0, 0, "#ff6b35", 20)}
           </g>
@@ -662,7 +627,6 @@ function renderStreakSection(
         </text>
       </g>
       
-      <!-- Longest Streak Card -->
       <g transform="translate(${(cardWidth3 + 16) * 2}, 0)">
         <rect x="0" y="0" width="${cardWidth3}" height="140" rx="14" fill="${
     theme.cardBackground
@@ -718,7 +682,6 @@ function renderContributionLineGraph(
 
   const last31Days = contributionData.slice(-31);
 
-  // Get month info for title
   const firstDate = new Date(last31Days[0].date);
   const lastDate = new Date(last31Days[last31Days.length - 1].date);
   const months = [
@@ -761,7 +724,6 @@ function renderContributionLineGraph(
   const graphHeight = 80;
   const maxCount = Math.max(...last31Days.map((d) => d.contributionCount), 1);
 
-  // Build path and points using arrays for better performance
   const linePathParts: string[] = [];
   const points: { x: number; y: number; date: string }[] = [];
 
@@ -776,7 +738,6 @@ function renderContributionLineGraph(
 
   const linePath = linePathParts.join(" ");
 
-  // Build data points SVG
   const dataPointsSvg = points
     .filter((_, i) => i % 5 === 0 || i === points.length - 1)
     .map(
@@ -785,7 +746,6 @@ function renderContributionLineGraph(
     )
     .join("");
 
-  // Build x-axis labels
   const xAxisLabelsSvg = points
     .filter((_, i) => i % 7 === 0 || i === points.length - 1)
     .map((p) => {
@@ -865,7 +825,6 @@ export function generateInsightCard(
   const cardWidth = 850;
   let currentY = 36;
 
-  // Header (includes profile, summary, and header chart based on options)
   const headerSection = renderHeaderSection(stats, theme, currentY, cardWidth, {
     showProfile: options.showProfile,
     showSummary: options.showSummary,
@@ -873,19 +832,16 @@ export function generateInsightCard(
   });
   currentY += headerSection.height + (headerSection.height > 0 ? 3 : 0);
 
-  // Stats and Languages side by side
   const showStats = options.showStats !== false;
   const showLanguages = options.showLanguages !== false;
 
-  // Calculate positioning based on which cards are shown
   let statsStartX = 40;
   let languagesStartX = 433;
 
-  // Center card if only one is shown
   if (showStats && !showLanguages) {
-    statsStartX = (cardWidth - 377) / 2; // Center stats card
+    statsStartX = (cardWidth - 377) / 2;
   } else if (!showStats && showLanguages) {
-    languagesStartX = (cardWidth - 377) / 2; // Center languages card
+    languagesStartX = (cardWidth - 377) / 2;
   }
 
   const statsCard = showStats
@@ -899,14 +855,12 @@ export function generateInsightCard(
   const statsAndLangsHeight = Math.max(statsCard.height, languagesCard.height);
   currentY += statsAndLangsHeight + (statsAndLangsHeight > 0 ? 3 : 0);
 
-  // Streak section
   const streakSection =
     options.showStreak !== false
       ? renderStreakSection(stats, theme, currentY, cardWidth)
       : { svg: "", height: 0 };
   currentY += streakSection.height + (streakSection.height > 0 ? 3 : 0);
 
-  // Contribution graph
   const graphSection =
     options.showGraph !== false
       ? renderContributionLineGraph(stats, theme, currentY, cardWidth)
@@ -920,7 +874,6 @@ export function generateInsightCard(
   ${generateAnimationStyles(theme)}
   ${generateGradientDefs(theme)}
   
-  <!-- Gradient Border Definition -->
   <defs>
     <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:${theme.accent}" />
@@ -929,7 +882,6 @@ export function generateInsightCard(
     </linearGradient>
   </defs>
   
-  <!-- Main Background with gradient border -->
   <rect x="0" y="0" width="${cardWidth}" height="${cardHeight}" rx="16" fill="${
     theme.background
   }"/>

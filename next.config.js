@@ -1,8 +1,22 @@
-/** @type {import('next').NextConfig} */
+const os = require('os');
+
+const getLocalIPs = () => {
+  const interfaces = os.networkInterfaces();
+  const ips = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  return ips;
+};
+
 const nextConfig = {
-  // Enable edge runtime for faster response
+  allowedDevOrigins: getLocalIPs(),
   experimental: {
-    // Optimize for Vercel deployment
+    
   },
 }
 

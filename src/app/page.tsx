@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
-// GitHub Octicons - matching GitHub's actual icons
 const Icons = {
   github: (
     <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
@@ -65,7 +64,7 @@ const themes = [
    { id: 'neo_green', name: 'Neo Green', bgColor: '#121212', accentColor: '#00c875', textColor: '#a6e22e'},
 ];
 
-// GitHub's exact dark mode colors
+
 const darkColors = {
   canvasDefault: '#0d1117',
   canvasSubtle: '#161b22',
@@ -82,7 +81,7 @@ const darkColors = {
   dangerFg: '#f85149',
 };
 
-// GitHub's exact light mode colors
+
 const lightColors = {
   canvasDefault: '#ffffff',
   canvasSubtle: '#f6f8fa',
@@ -157,7 +156,6 @@ export default function Home() {
   const resolvedTheme = siteTheme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : siteTheme;
   const colors = resolvedTheme === 'dark' ? darkColors : lightColors;
   
-  // Ref for the username input field
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const CloseIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
@@ -165,25 +163,22 @@ export default function Home() {
     </svg>
   );
   
-  // Use ref to track timeout for proper cleanup
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       setBaseUrl(window.location.origin);
-      // Detect mobile
+      
       const checkMobile = () => setIsMobile(window.innerWidth < 768);
       checkMobile();
       window.addEventListener('resize', checkMobile);
 
-      // System theme detection
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
       setSystemPrefersDark(mql.matches);
       const handleThemeChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
       mql.addEventListener('change', handleThemeChange);
 
-      // Restore saved theme preference
       const saved = localStorage.getItem('site-theme') as SiteTheme | null;
       if (saved && ['light', 'dark', 'system'].includes(saved)) {
         setSiteTheme(saved);
@@ -203,22 +198,19 @@ export default function Home() {
       }
     };
   }, []);
-
-  // Persist site theme to localStorage
+  
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('site-theme', siteTheme);
     }
   }, [siteTheme, isMounted]);
-
-  // Keep body background in sync
+  
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.style.backgroundColor = colors.canvasDefault;
     }
   }, [colors.canvasDefault]);
 
-  // Compute dirty state by comparing current config against the snapshot taken at generation time
   const isDirty = useMemo(() => {
     if (!hasLoaded || !generatedConfigRef.current) return false;
     const g = generatedConfigRef.current;
@@ -256,8 +248,6 @@ export default function Home() {
       };
       setGeneratedUsername(username.trim());
       setRefreshKey(Date.now());
-      
-      // Check if API returns success before showing download buttons
       const checkUrl = `/api/insight?username=${username.trim()}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}&_t=${Date.now()}`;
       fetch(checkUrl)
         .then(response => {
@@ -273,8 +263,6 @@ export default function Home() {
           setHasError(true);
           setIsGenerating(false);
         });
-      
-      // Smooth scroll to preview section
       setTimeout(() => {
         const previewSection = document.getElementById('preview-section');
         if (previewSection) {
@@ -299,15 +287,12 @@ export default function Home() {
 
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text);
-    
-    // Clear any existing timeout
+
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
     }
     
     setCopied(type);
-    
-    // Set new timeout
     copyTimeoutRef.current = setTimeout(() => {
       setCopied(null);
       copyTimeoutRef.current = null;
@@ -322,7 +307,6 @@ export default function Home() {
       const svgText = await response.text();
       
       if (format === 'svg') {
-        // Download as SVG
         const blob = new Blob([svgText], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -331,20 +315,19 @@ export default function Home() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        // Convert SVG to PNG or JPG using canvas
         const img = new Image();
         const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const svgUrl = URL.createObjectURL(svgBlob);
         
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width * 2; // 2x for better quality
+          canvas.width = img.width * 2;
           canvas.height = img.height * 2;
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.scale(2, 2);
             if (format === 'jpg') {
-              ctx.fillStyle = '#0d1117'; // Dark background for JPG
+              ctx.fillStyle = '#0d1117';
               ctx.fillRect(0, 0, img.width, img.height);
             }
             ctx.drawImage(img, 0, 0);
@@ -370,7 +353,6 @@ export default function Home() {
     }
   }, [generatedUsername, hasError, previewUrl, refreshKey]);
 
-  // Google Sans Flex font stack
   const fontFamily = "'Google Sans', 'Google Sans Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
   const monoFontFamily = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace";
 
@@ -383,7 +365,7 @@ export default function Home() {
       fontSize: '14px',
       lineHeight: 1.5,
     }}>
-      {/* GitHub-style Header Bar */}
+      
       <header style={{
         position: 'sticky',
         top: 0,
@@ -427,7 +409,7 @@ export default function Home() {
               Generate beautiful stats cards for your GitHub profile
             </p>
           </div>
-          {/* Site Theme Toggle */}
+          
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -486,7 +468,7 @@ export default function Home() {
             .main-container { padding: 24px !important; }
           }
         `}</style>
-        {/* Configuration Section */}
+        
         <div style={{ marginBottom: '24px' }}>
           <div style={{
             display: 'flex',
@@ -508,7 +490,7 @@ export default function Home() {
             </h2>
           </div>
 
-          {/* Username Input — standalone top card */}
+          
           <div style={{
             backgroundColor: colors.canvasSubtle,
             border: `1px solid ${colors.borderDefault}`,
@@ -643,13 +625,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Customization — two-column grid */}
+          
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: '12px',
           }}>
-            {/* Card Theme */}
+            
             <div style={{
               backgroundColor: colors.canvasSubtle,
               border: `1px solid ${colors.borderDefault}`,
@@ -734,8 +716,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
-            {/* Display Options */}
+            
             <div style={{
               backgroundColor: colors.canvasSubtle,
               border: `1px solid ${colors.borderDefault}`,
@@ -804,8 +785,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
-            {/* Hide Languages — full width below */}
+            
             <div style={{
               backgroundColor: colors.canvasSubtle,
               border: `1px solid ${colors.borderDefault}`,
@@ -955,8 +935,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Preview Section */}
+        
         <div id="preview-section" style={{ marginBottom: '24px' }}>
           <div style={{
             display: 'flex',
@@ -979,7 +958,6 @@ export default function Home() {
               </h2>
             </div>
             
-            {/* Download buttons */}
             {generatedUsername && !hasError && !isGenerating && hasLoaded && (
               <div style={{ display: 'flex', gap: '8px' }}>
                 {(['svg', 'png', 'jpg'] as const).map((format) => (
@@ -1015,8 +993,7 @@ export default function Home() {
               </div>
             )}
           </div>
-
-          {/* Stale card notice */}
+          
           {isDirty && hasLoaded && !isGenerating && (
             <div style={{
               display: 'flex',
@@ -1188,9 +1165,7 @@ export default function Home() {
                       opacity: isGenerating ? 0.3 : 1,
                       transition: 'opacity 0.3s ease',
                     }}
-                    onLoad={() => {
-                      // Loading state is managed by the fetch check
-                    }}
+                    onLoad={() => {}}
                     onError={() => {
                       setIsGenerating(false);
                       setHasError(true);
@@ -1202,8 +1177,7 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* Embed Code Section - Only show when username is generated, no error, and loaded */}
+        
         {generatedUsername && !hasError && hasLoaded && (
         <div style={{ marginBottom: '24px' }}>
           <div style={{
@@ -1232,7 +1206,7 @@ export default function Home() {
             borderRadius: '6px',
             padding: '16px',
           }}>
-            {/* Markdown Code Block */}
+            
             <div style={{ marginBottom: '16px' }}>
               <div style={{
                 fontSize: '12px',
@@ -1296,8 +1270,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-
-            {/* HTML Code Block */}
+            
             <div>
               <div style={{
                 fontSize: '12px',
@@ -1364,8 +1337,7 @@ export default function Home() {
           </div>
         </div>
         )}
-
-        {/* Footer */}
+        
         <footer style={{
           paddingTop: '24px',
           borderTop: `1px solid ${colors.borderMuted}`,
