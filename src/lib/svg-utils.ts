@@ -1,4 +1,3 @@
-import { ThemeColors } from '@/types/github';
 
 export const icons = {
   star: 'M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z',
@@ -56,13 +55,18 @@ export function renderIcon(icon: keyof typeof icons, x: number, y: number, color
   `;
 }
 
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;',
+};
+const HTML_ESCAPE_REGEX = /[&<>"']/g;
+
 export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  if (!text) return '';
+  return text.replace(HTML_ESCAPE_REGEX, char => HTML_ESCAPE_MAP[char] || char);
 }
 
 export function formatNumber(num: number): string {
@@ -81,78 +85,4 @@ export function getContributionLevel(count: number): number {
   if (count <= 6) return 2;
   if (count <= 9) return 3;
   return 4;
-}
-
-export function generateAnimationStyles(theme: ThemeColors): string {
-  return `
-    <defs>
-      <style type="text/css">
-        <![CDATA[
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-          
-          .card-text {
-            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-          }
-          
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-      }
-      @keyframes glow {
-        0%, 100% { filter: drop-shadow(0 0 2px ${theme.accent}40); }
-        50% { filter: drop-shadow(0 0 8px ${theme.accent}60); }
-      }
-      @keyframes rankPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-      }
-      .animate-fade { animation: fadeIn 0.5s ease-out forwards; }
-      .animate-slide { animation: slideIn 0.6s ease-out forwards; }
-      .animate-pulse { animation: pulse 2s ease-in-out infinite; }
-      .animate-glow { animation: glow 3s ease-in-out infinite; }
-      .animate-rank { animation: rankPulse 2s ease-in-out infinite; }
-      .stat-item { animation: fadeIn 0.5s ease-out forwards; }
-      .lang-bar { animation: slideIn 0.8s ease-out forwards; }
-        ]]>
-      </style>
-    </defs>
-  `;
-}
-
-export function generateGradientDefs(theme: ThemeColors): string {
-  return `
-    <defs>
-      <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:${theme.background};stop-opacity:1" />
-        <stop offset="50%" style="stop-color:${theme.cardBackground};stop-opacity:1" />
-        <stop offset="100%" style="stop-color:${theme.background};stop-opacity:1" />
-      </linearGradient>
-      <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style="stop-color:${theme.accent};stop-opacity:1" />
-        <stop offset="100%" style="stop-color:${theme.accentSecondary};stop-opacity:1" />
-      </linearGradient>
-      <linearGradient id="rankGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:${theme.accent};stop-opacity:0.2" />
-        <stop offset="100%" style="stop-color:${theme.accentSecondary};stop-opacity:0.2" />
-      </linearGradient>
-      <filter id="glow">
-        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-        <feMerge>
-          <feMergeNode in="coloredBlur"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
-      <clipPath id="avatarClip">
-        <circle cx="50" cy="50" r="45" />
-      </clipPath>
-    </defs>
-  `;
 }

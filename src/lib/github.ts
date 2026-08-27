@@ -8,8 +8,7 @@ function computeMonthlyContributions(contributionDays: ContributionDay[]): Month
   const monthMap = new Map<string, number>();
 
   for (const day of contributionDays) {
-    const date = new Date(day.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthKey = day.date.slice(0, 7); // 'YYYY-MM'
     monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + day.contributionCount);
   }
 
@@ -20,12 +19,11 @@ function computeMonthlyContributions(contributionDays: ContributionDay[]): Month
       const [year, m] = month.split('-');
       return {
         month,
-        label: `${MONTH_NAMES[parseInt(m) - 1]} '${year.slice(2)}`,
+        label: `${MONTH_NAMES[parseInt(m, 10) - 1]} '${year.slice(2)}`,
         count
       };
     });
 }
-
 
 interface RepositoryWithLanguages {
   stargazerCount: number;
@@ -42,14 +40,14 @@ interface RepositoryWithLanguages {
   } | null;
 }
 
-const USER_PROFILE_QUERY = `
+const USER_COMBINED_QUERY = `
 query($username: String!) {
   user(login: $username) {
     login
     name
     location
-    followers { totalCount }
     createdAt
+    followers { totalCount }
     pullRequests(first: 1) {
       totalCount
     }
@@ -60,15 +58,6 @@ query($username: String!) {
       totalPullRequestReviewContributions
       totalRepositoryContributions
       contributionYears
-    }
-  }
-}
-`;
-
-const USER_CALENDAR_QUERY = `
-query($username: String!) {
-  user(login: $username) {
-    contributionsCollection {
       contributionCalendar {
         totalContributions
         weeks {
@@ -79,13 +68,6 @@ query($username: String!) {
         }
       }
     }
-  }
-}
-`;
-
-const USER_REPOS_QUERY = `
-query($username: String!) {
-  user(login: $username) {
     repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
       totalCount
       nodes {
@@ -107,73 +89,43 @@ query($username: String!) {
 }
 `;
 
-async function fetchYearContributions(username: string, year: number, token: string): Promise<ContributionDay[]> {
-  const query = `
-    query($username: String!, $from: DateTime!, $to: DateTime!) {
-      user(login: $username) {
-        contributionsCollection(from: $from, to: $to) {
-          contributionCalendar {
-            weeks {
-              contributionDays {
-                contributionCount
-                date
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const from = `${year}-01-01T00:00:00Z`;
-  const to = `${year}-12-31T23:59:59Z`;
-
-  const response = await fetch(GITHUB_GRAPHQL_API, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables: { username, from, to },
-    }),
-  });
-
-  const data = await response.json();
-
-  if (data.errors) {
-    console.error('GraphQL errors:', data.errors);
-    return [];
-  }
-
-  const weeks = data.data?.user?.contributionsCollection?.contributionCalendar?.weeks || [];
-  return weeks.flatMap((week: { contributionDays: ContributionDay[] }) => week.contributionDays);
-}
-
-
-async function fetchCurrentYearContributionDays(username: string, token: string): Promise<ContributionDay[]> {
-  const query = `
-    query($username: String!, $from: DateTime!, $to: DateTime!) {
-      user(login: $username) {
-        contributionsCollection(from: $from, to: $to) {
-          contributionCalendar {
-            weeks {
-              contributionDays {
-                contributionCount
-                date
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
+async function fetchHistoricalContributions(
+  username: string,
+  years: number[],
+  token: string,
+  signal: AbortSignal
+): Promise<ContributionDay[]> {
+  if (!years.length) return [];
 
   const now = new Date();
   const currentYear = now.getFullYear();
-  const from = `${currentYear}-01-01T00:00:00Z`;
-  const to = now.toISOString();
+  const nowIso = now.toISOString();
+
+  // Construct a single batched query with aliases for each year
+  const yearQueries = years.map(year => {
+    const from = `${year}-01-01T00:00:00Z`;
+    const to = year === currentYear ? nowIso : `${year}-12-31T23:59:59Z`;
+    return `
+      y${year}: contributionsCollection(from: "${from}", to: "${to}") {
+        contributionCalendar {
+          weeks {
+            contributionDays {
+              contributionCount
+              date
+            }
+          }
+        }
+      }
+    `;
+  }).join('\n');
+
+  const query = `
+    query($username: String!) {
+      user(login: $username) {
+        ${yearQueries}
+      }
+    }
+  `;
 
   const response = await fetch(GITHUB_GRAPHQL_API, {
     method: 'POST',
@@ -183,31 +135,43 @@ async function fetchCurrentYearContributionDays(username: string, token: string)
     },
     body: JSON.stringify({
       query,
-      variables: { username, from, to },
+      variables: { username },
     }),
+    signal,
   });
 
   const data = await response.json();
 
   if (data.errors) {
+    console.error('GraphQL historical contributions errors:', data.errors);
     return [];
   }
 
-  const weeks = data.data?.user?.contributionsCollection?.contributionCalendar?.weeks || [];
-  return weeks.flatMap((week: { contributionDays: ContributionDay[] }) => week.contributionDays);
-}
+  const userData = data.data?.user;
+  if (!userData) return [];
 
+  const allDays: ContributionDay[] = [];
+  for (const year of years) {
+    const weeks = userData[`y${year}`]?.contributionCalendar?.weeks || [];
+    for (const week of weeks) {
+      if (week.contributionDays) {
+        allDays.push(...week.contributionDays);
+      }
+    }
+  }
+
+  return allDays;
+}
 
 function calculateStreaks(contributionDays: ContributionDay[]): { current: StreakInfo; longest: StreakInfo } {
   const emptyStreak: StreakInfo = { count: 0, startDate: '', endDate: '' };
   if (!contributionDays.length) return { current: emptyStreak, longest: emptyStreak };
 
-  const sortedDays = [...contributionDays].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  const uniqueDays: ContributionDay[] = [];
   const seenDates = new Set<string>();
+  const uniqueDays: ContributionDay[] = [];
+  
+  // Sort chronologically by ISO date string
+  const sortedDays = [...contributionDays].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   for (const day of sortedDays) {
     if (!seenDates.has(day.date)) {
       seenDates.add(day.date);
@@ -219,19 +183,14 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   let currentStreakStart = '';
   let currentStreakEnd = '';
   let currentStreakCount = 0;
-  let lastDate: Date | null = null;
+  let lastTime = 0;
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
   for (let i = 0; i < uniqueDays.length; i++) {
     const day = uniqueDays[i];
-    const dayDate = new Date(day.date);
-    dayDate.setHours(0, 0, 0, 0);
-
-    let isConsecutive = false;
-    if (lastDate) {
-      const expectedDate = new Date(lastDate);
-      expectedDate.setDate(expectedDate.getDate() + 1);
-      isConsecutive = dayDate.getTime() === expectedDate.getTime();
-    }
+    const dayTime = Date.parse(day.date + 'T00:00:00Z');
+    const isConsecutive = lastTime > 0 && Math.round((dayTime - lastTime) / ONE_DAY_MS) === 1;
 
     if (day.contributionCount > 0) {
       if (currentStreakCount === 0 || !isConsecutive) {
@@ -258,7 +217,7 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
         currentStreakCount = 0;
       }
     }
-    lastDate = dayDate;
+    lastTime = dayTime;
   }
 
   if (currentStreakCount > 0) {
@@ -277,15 +236,13 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   }
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  const todayStr = today.toISOString().split('T')[0];
+  today.setUTCDate(today.getUTCDate() - 1);
+  const yesterdayStr = today.toISOString().split('T')[0];
 
   let currentStreak = emptyStreak;
   for (const streak of streaks) {
-    const endDate = new Date(streak.endDate);
-    endDate.setHours(0, 0, 0, 0);
-    if (endDate.getTime() === today.getTime() || endDate.getTime() === yesterday.getTime()) {
+    if (streak.endDate === todayStr || streak.endDate === yesterdayStr) {
       currentStreak = streak;
       break;
     }
@@ -356,16 +313,17 @@ function calculateRank(stats: {
 
 function calculateLanguageStats(repositories: RepositoryWithLanguages[], hiddenLanguages: Set<string> = new Set()): LanguageStats[] {
   const languageMap = new Map<string, { size: number; color: string; count: number }>();
+  let totalSize = 0;
 
   for (const repo of repositories) {
-    if (repo.isFork) continue;
-    if (!repo.languages?.edges) continue;
+    if (repo.isFork || !repo.languages?.edges) continue;
 
     for (const edge of repo.languages.edges) {
       const langName = edge.node.name;
       if (hiddenLanguages.has(langName.toLowerCase())) continue;
       const langColor = edge.node.color || '#858585';
       const langSize = edge.size;
+      totalSize += langSize;
 
       const existing = languageMap.get(langName);
       if (existing) {
@@ -381,8 +339,6 @@ function calculateLanguageStats(repositories: RepositoryWithLanguages[], hiddenL
     }
   }
 
-  const totalSize = Array.from(languageMap.values()).reduce((sum, lang) => sum + lang.size, 0);
-
   const languages: LanguageStats[] = Array.from(languageMap.entries())
     .map(([name, { size, color }]) => ({
       name,
@@ -397,19 +353,27 @@ function calculateLanguageStats(repositories: RepositoryWithLanguages[], hiddenL
 }
 
 const cache = new Map<string, { data: GitHubStats; timestamp: number }>();
+const pendingRequests = new Map<string, Promise<GitHubStats>>();
 const CACHE_TTL = 5 * 60 * 1000;
+const MAX_CACHE_SIZE = 1000;
 
-export async function fetchGitHubStats(username: string, hiddenLanguages: string[] = []): Promise<GitHubStats> {
-  const cacheKey = username.toLowerCase();
-  const fullCacheKey = hiddenLanguages.length > 0 
-    ? `${cacheKey}:hide=${hiddenLanguages.map(l => l.toLowerCase()).sort().join(',')}` 
-    : cacheKey;
-  const cached = cache.get(fullCacheKey);
-
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
+function setInCache(key: string, data: GitHubStats): void {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const now = Date.now();
+    for (const [k, v] of cache.entries()) {
+      if (now - v.timestamp >= CACHE_TTL) {
+        cache.delete(k);
+      }
+    }
+    if (cache.size >= MAX_CACHE_SIZE) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey) cache.delete(oldestKey);
+    }
   }
+  cache.set(key, { data, timestamp: Date.now() });
+}
 
+async function executeFetchGitHubStats(username: string, hiddenLanguages: string[] = []): Promise<GitHubStats> {
   const token = process.env.GITHUB_TOKEN;
 
   if (!token) {
@@ -417,82 +381,51 @@ export async function fetchGitHubStats(username: string, hiddenLanguages: string
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const [profileResponse, reposResponse, calendarResponse] = await Promise.all([
-      fetch(GITHUB_GRAPHQL_API, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: USER_PROFILE_QUERY,
-          variables: { username },
-        }),
-        signal: controller.signal,
+    const response = await fetch(GITHUB_GRAPHQL_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: USER_COMBINED_QUERY,
+        variables: { username },
       }),
-      fetch(GITHUB_GRAPHQL_API, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: USER_REPOS_QUERY,
-          variables: { username },
-        }),
-        signal: controller.signal,
-      }),
-      fetch(GITHUB_GRAPHQL_API, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: USER_CALENDAR_QUERY,
-          variables: { username },
-        }),
-        signal: controller.signal,
-      })
-    ]);
+      signal: controller.signal,
+    });
 
-    clearTimeout(timeoutId);
+    const data = await response.json();
 
-    const [profileData, reposData, calendarData] = await Promise.all([
-      profileResponse.json(),
-      reposResponse.json(),
-      calendarResponse.json()
-    ]);
-
-    if (profileData.errors) {
-      console.error('GraphQL profile query errors:', profileData.errors);
-      throw new Error(profileData.errors[0]?.message || 'Failed to fetch GitHub user profile');
+    if (data.errors) {
+      console.error('GraphQL query errors:', data.errors);
+      throw new Error(data.errors[0]?.message || 'Failed to fetch GitHub stats');
     }
 
-    if (reposData.errors) {
-      console.error('GraphQL repos query errors:', reposData.errors);
-      throw new Error(reposData.errors[0]?.message || 'Failed to fetch GitHub repositories');
-    }
-
-    if (calendarData.errors) {
-      console.error('GraphQL calendar query errors:', calendarData.errors);
-      throw new Error(calendarData.errors[0]?.message || 'Failed to fetch GitHub contribution calendar');
-    }
-
-    if (!profileData.data?.user) {
+    if (!data.data?.user) {
       throw new Error(`User "${username}" not found`);
     }
 
+    const rawUser = data.data.user;
     const user: GitHubUser = {
-      ...profileData.data.user,
-      repositories: reposData.data?.user?.repositories || { totalCount: 0, nodes: [] },
-      contributionsCollection: {
-        ...profileData.data.user.contributionsCollection,
-        contributionCalendar: calendarData.data?.user?.contributionsCollection?.contributionCalendar || { totalContributions: 0, weeks: [] }
-      }
+      login: rawUser.login,
+      name: rawUser.name,
+      location: rawUser.location,
+      createdAt: rawUser.createdAt,
+      followers: rawUser.followers || { totalCount: 0 },
+      pullRequests: rawUser.pullRequests || { totalCount: 0 },
+      repositories: rawUser.repositories || { totalCount: 0, nodes: [] },
+      contributionsCollection: rawUser.contributionsCollection || {
+        totalCommitContributions: 0,
+        totalIssueContributions: 0,
+        totalPullRequestContributions: 0,
+        totalPullRequestReviewContributions: 0,
+        totalRepositoryContributions: 0,
+        contributionYears: [new Date().getFullYear()],
+        contributionCalendar: { totalContributions: 0, weeks: [] },
+      },
     };
 
     const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
@@ -501,39 +434,45 @@ export async function fetchGitHubStats(username: string, hiddenLanguages: string
     const currentYear = new Date().getFullYear();
     const years = user.contributionsCollection.contributionYears || [currentYear];
 
+    const currentYearDays = user.contributionsCollection.contributionCalendar.weeks
+      .flatMap(week => week.contributionDays || []);
+
     let allContributionDays: ContributionDay[] = [];
     let historicalFetchSuccess = false;
 
-    try {
-      const yearDaysResults = await Promise.all(
-        years.map(year => {
-          if (year === currentYear) {
-            return fetchCurrentYearContributionDays(username, token);
-          } else {
-            return fetchYearContributions(username, year, token);
-          }
-        })
-      );
-
-      allContributionDays = yearDaysResults.flat();
+    if (years.length > 1) {
+      try {
+        const historicalDays = await fetchHistoricalContributions(username, years, token, controller.signal);
+        if (historicalDays.length > 0) {
+          allContributionDays = historicalDays;
+          historicalFetchSuccess = true;
+        } else {
+          allContributionDays = currentYearDays;
+        }
+      } catch (error) {
+        console.error('Error fetching historical contribution days:', error);
+        allContributionDays = currentYearDays;
+      }
+    } else {
+      allContributionDays = currentYearDays;
       historicalFetchSuccess = true;
-    } catch (error) {
-      console.error('Error fetching historical contribution days:', error);
-      allContributionDays = user.contributionsCollection.contributionCalendar.weeks
-        .flatMap(week => week.contributionDays);
     }
 
-    const contributionDays = user.contributionsCollection.contributionCalendar.weeks
-      .flatMap(week => week.contributionDays);
+    clearTimeout(timeoutId);
 
     const streaks = calculateStreaks(allContributionDays);
     const hiddenLangsSet = new Set(hiddenLanguages.map(l => l.toLowerCase()));
     const languages = calculateLanguageStats(user.repositories.nodes as unknown as RepositoryWithLanguages[], hiddenLangsSet);
 
     let totalContributionsAllTime = 0;
-
     if (historicalFetchSuccess && allContributionDays.length > 0) {
-      totalContributionsAllTime = allContributionDays.reduce((sum, day) => sum + day.contributionCount, 0);
+      const seenDates = new Set<string>();
+      for (const day of allContributionDays) {
+        if (!seenDates.has(day.date)) {
+          seenDates.add(day.date);
+          totalContributionsAllTime += day.contributionCount;
+        }
+      }
     } else {
       totalContributionsAllTime = user.contributionsCollection.contributionCalendar.totalContributions;
     }
@@ -563,19 +502,13 @@ export async function fetchGitHubStats(username: string, hiddenLanguages: string
       currentStreak: streaks.current,
       longestStreak: streaks.longest,
       accountCreatedAt: user.createdAt,
-      contributionData: contributionDays,
-      monthlyContributions: computeMonthlyContributions(contributionDays),
+      contributionData: currentYearDays,
+      monthlyContributions: computeMonthlyContributions(currentYearDays),
       rank,
       rankPercentile: percentile,
     };
 
-    const fullCacheKey = hiddenLanguages.length > 0 
-      ? `${cacheKey}:hide=${hiddenLanguages.sort().join(',')}` 
-      : cacheKey;
-    cache.set(fullCacheKey, { data: result, timestamp: Date.now() });
-
     return result;
-
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {
@@ -583,4 +516,35 @@ export async function fetchGitHubStats(username: string, hiddenLanguages: string
     }
     throw error;
   }
+}
+
+export async function fetchGitHubStats(username: string, hiddenLanguages: string[] = []): Promise<GitHubStats> {
+  const normalizedUsername = username.trim().toLowerCase();
+  const sortedHidden = hiddenLanguages.map(l => l.trim().toLowerCase()).filter(Boolean).sort();
+  const fullCacheKey = sortedHidden.length > 0 
+    ? `${normalizedUsername}:hide=${sortedHidden.join(',')}` 
+    : normalizedUsername;
+
+  const cached = cache.get(fullCacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  const inFlight = pendingRequests.get(fullCacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const stats = await executeFetchGitHubStats(username.trim(), sortedHidden);
+      setInCache(fullCacheKey, stats);
+      return stats;
+    } finally {
+      pendingRequests.delete(fullCacheKey);
+    }
+  })();
+
+  pendingRequests.set(fullCacheKey, fetchPromise);
+  return fetchPromise;
 }

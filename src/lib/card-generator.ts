@@ -4,8 +4,6 @@ import {
   renderIcon,
   escapeHtml,
   formatNumber,
-  generateAnimationStyles,
-  generateGradientDefs,
 } from "./svg-utils";
 
 interface CardOptions {
@@ -20,78 +18,42 @@ interface CardOptions {
 }
 
 const FONT_FAMILY =
-  "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'";
+
+const MONTHS_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+const MONTHS_LONG = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 function formatDateShort(dateStr: string): string {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return `${months[date.getMonth()]} ${date.getDate()}`;
+  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`;
 }
 
 function formatDateRange(startDateStr: string, endDateStr: string): string {
   if (!startDateStr || !endDateStr) return "";
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+  const startMonth = MONTHS_SHORT[startDate.getMonth()];
+  const endMonth = MONTHS_SHORT[endDate.getMonth()];
 
   if (startDate.getFullYear() === endDate.getFullYear()) {
-    return `${months[startDate.getMonth()]} ${startDate.getDate()} - ${
-      months[endDate.getMonth()]
-    } ${endDate.getDate()}, ${endDate.getFullYear()}`;
+    return `${startMonth} ${startDate.getDate()} - ${endMonth} ${endDate.getDate()}, ${endDate.getFullYear()}`;
   } else {
-    return `${
-      months[startDate.getMonth()]
-    } ${startDate.getDate()}, ${startDate.getFullYear()} - ${
-      months[endDate.getMonth()]
-    } ${endDate.getDate()}, ${endDate.getFullYear()}`;
+    return `${startMonth} ${startDate.getDate()}, ${startDate.getFullYear()} - ${endMonth} ${endDate.getDate()}, ${endDate.getFullYear()}`;
   }
 }
 
 function formatDateFull(dateStr: string): string {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 function getYearsAgo(dateStr: string): string {
@@ -103,19 +65,20 @@ function getYearsAgo(dateStr: string): string {
   return `${years} year${years !== 1 ? "s" : ""} ago`;
 }
 
+const GRADE_COLORS: Record<string, string> = {
+  'S': '#fbbf24',
+  'A+': '#10b981',
+  'A': '#34d399',
+  'A-': '#6ee7b7',
+  'B+': '#60a5fa',
+  'B': '#93c5fd',
+  'B-': '#a78bfa',
+  'C+': '#c4b5fd',
+  'C': '#9ca3af',
+};
+
 function getGradeColor(rank: string): string {
-  const gradeColors: Record<string, string> = {
-    'S': '#fbbf24',
-    'A+': '#10b981',
-    'A': '#34d399',
-    'A-': '#6ee7b7',
-    'B+': '#60a5fa',
-    'B': '#93c5fd',
-    'B-': '#a78bfa',
-    'C+': '#c4b5fd',
-    'C': '#9ca3af',
-  };
-  return gradeColors[rank] || '#9ca3af';
+  return GRADE_COLORS[rank] || '#9ca3af';
 }
 
 function calculateGrade(stats: GitHubStats): { grade: string; color: string } {
@@ -155,7 +118,12 @@ function renderHeaderSection(
 
   const graphWidth = 280;
   const graphHeight = 90;
-  const maxCount = Math.max(...monthlyData.map((d) => d.count), 1);
+  let maxCount = 1;
+  for (let i = 0; i < monthlyData.length; i++) {
+    if (monthlyData[i].count > maxCount) {
+      maxCount = monthlyData[i].count;
+    }
+  }
 
   const areaPoints: string[] = [`M 0 ${graphHeight}`];
   const linePoints: string[] = [];
@@ -291,12 +259,10 @@ function renderHeaderSection(
         
         <g transform="translate(0, ${graphHeight + 14})">
           ${monthlyData
-            .filter((_, i) => i % 4 === 0 || i === monthlyData.length - 1)
-            .map((data, idx, arr) => {
-              const originalIdx = monthlyData.indexOf(data);
-              return `<text x="${
-                (originalIdx / Math.max(monthlyData.length - 1, 1)) * graphWidth
-              }" y="0" font-size="9" fill="${
+            .map((data, originalIdx) => {
+              if (originalIdx % 4 !== 0 && originalIdx !== monthlyData.length - 1) return "";
+              const x = (originalIdx / Math.max(monthlyData.length - 1, 1)) * graphWidth;
+              return `<text x="${x}" y="0" font-size="9" fill="${
                 theme.textSecondary
               }" font-family="${FONT_FAMILY}" text-anchor="middle">${
                 data.label
@@ -461,42 +427,32 @@ function renderLanguagesCard(
     )
     .join("");
 
-  const leftColumn = topLangs.filter((_, i) => i % 2 === 0);
-  const rightColumn = topLangs.filter((_, i) => i % 2 === 1);
-
-  const leftLangsSvg = leftColumn
-    .map((lang, index) => {
-      const y = index * 27;
-      return `<g transform="translate(0, ${y})"><circle cx="6" cy="7" r="5" fill="${
+  let leftLangsSvg = "";
+  let rightLangsSvg = "";
+  for (let i = 0; i < topLangs.length; i++) {
+    const lang = topLangs[i];
+    const colIndex = Math.floor(i / 2);
+    const y = colIndex * 27;
+    const escapedName = escapeHtml(lang.name);
+    const pct = lang.percentage.toFixed(1);
+    if (i % 2 === 0) {
+      leftLangsSvg += `<g transform="translate(0, ${y})"><circle cx="6" cy="7" r="5" fill="${
         lang.color
       }"/><text x="20" y="11" font-size="12" font-weight="500" fill="${
         theme.text
-      }" font-family="${FONT_FAMILY}" letter-spacing="0.3">${escapeHtml(
-        lang.name
-      )}</text><text x="155" y="11" font-size="12" fill="${
+      }" font-family="${FONT_FAMILY}" letter-spacing="0.3">${escapedName}</text><text x="155" y="11" font-size="12" fill="${
         theme.textSecondary
-      }" font-family="${FONT_FAMILY}" text-anchor="end" letter-spacing="0.2">${lang.percentage.toFixed(
-        1
-      )}%</text></g>`;
-    })
-    .join("");
-
-  const rightLangsSvg = rightColumn
-    .map((lang, index) => {
-      const y = index * 27;
-      return `<g transform="translate(175, ${y})"><circle cx="6" cy="7" r="5" fill="${
+      }" font-family="${FONT_FAMILY}" text-anchor="end" letter-spacing="0.2">${pct}%</text></g>`;
+    } else {
+      rightLangsSvg += `<g transform="translate(175, ${y})"><circle cx="6" cy="7" r="5" fill="${
         lang.color
       }"/><text x="20" y="11" font-size="12" font-weight="500" fill="${
         theme.text
-      }" font-family="${FONT_FAMILY}" letter-spacing="0.3">${escapeHtml(
-        lang.name
-      )}</text><text x="155" y="11" font-size="12" fill="${
+      }" font-family="${FONT_FAMILY}" letter-spacing="0.3">${escapedName}</text><text x="155" y="11" font-size="12" fill="${
         theme.textSecondary
-      }" font-family="${FONT_FAMILY}" text-anchor="end" letter-spacing="0.2">${lang.percentage.toFixed(
-        1
-      )}%</text></g>`;
-    })
-    .join("");
+      }" font-family="${FONT_FAMILY}" text-anchor="end" letter-spacing="0.2">${pct}%</text></g>`;
+    }
+  }
 
   const svg = `<g transform="translate(${startX}, ${startY})">
       <rect x="0" y="0" width="377" height="200" rx="14" fill="${
@@ -684,79 +640,57 @@ function renderContributionLineGraph(
 
   const firstDate = new Date(last31Days[0].date);
   const lastDate = new Date(last31Days[last31Days.length - 1].date);
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
 
   let monthLabel: string;
   if (
     firstDate.getMonth() === lastDate.getMonth() &&
     firstDate.getFullYear() === lastDate.getFullYear()
   ) {
-    monthLabel = `${months[firstDate.getMonth()]} ${firstDate.getFullYear()}`;
+    monthLabel = `${MONTHS_LONG[firstDate.getMonth()]} ${firstDate.getFullYear()}`;
   } else if (firstDate.getFullYear() === lastDate.getFullYear()) {
-    monthLabel = `${months[firstDate.getMonth()].slice(0, 3)} - ${months[
-      lastDate.getMonth()
-    ].slice(0, 3)} ${lastDate.getFullYear()}`;
+    monthLabel = `${MONTHS_SHORT[firstDate.getMonth()]} - ${
+      MONTHS_SHORT[lastDate.getMonth()]
+    } ${lastDate.getFullYear()}`;
   } else {
-    monthLabel = `${months[firstDate.getMonth()].slice(
-      0,
-      3
-    )} ${firstDate.getFullYear()} - ${months[lastDate.getMonth()].slice(
-      0,
-      3
-    )} ${lastDate.getFullYear()}`;
+    monthLabel = `${MONTHS_SHORT[firstDate.getMonth()]} ${firstDate.getFullYear()} - ${
+      MONTHS_SHORT[lastDate.getMonth()]
+    } ${lastDate.getFullYear()}`;
   }
 
   const innerWidth = cardWidth - 80;
   const graphWidth = innerWidth - 70;
   const graphHeight = 80;
-  const maxCount = Math.max(...last31Days.map((d) => d.contributionCount), 1);
+  let maxCount = 1;
+  for (let i = 0; i < last31Days.length; i++) {
+    if (last31Days[i].contributionCount > maxCount) {
+      maxCount = last31Days[i].contributionCount;
+    }
+  }
 
   const linePathParts: string[] = [];
-  const points: { x: number; y: number; date: string }[] = [];
+  let dataPointsSvg = "";
+  let xAxisLabelsSvg = "";
+  const lastIdx = last31Days.length - 1;
+  const step = Math.max(lastIdx, 1);
 
   for (let i = 0; i < last31Days.length; i++) {
     const day = last31Days[i];
-    const x = (i / Math.max(last31Days.length - 1, 1)) * graphWidth;
+    const x = (i / step) * graphWidth;
     const y =
       graphHeight - (day.contributionCount / maxCount) * (graphHeight - 10);
-    points.push({ x, y, date: day.date });
     linePathParts.push(`${i === 0 ? "M" : "L"} ${x} ${y}`);
+
+    if (i % 5 === 0 || i === lastIdx) {
+      dataPointsSvg += `<circle cx="${x}" cy="${y}" r="4" fill="${theme.accent}" stroke="${theme.cardBackground}" stroke-width="2"/>`;
+    }
+
+    if (i % 7 === 0 || i === lastIdx) {
+      const date = new Date(day.date);
+      xAxisLabelsSvg += `<text x="${x}" y="0" text-anchor="middle" font-size="10" fill="${theme.textSecondary}" font-family="${FONT_FAMILY}" letter-spacing="0.2">${date.getDate()}</text>`;
+    }
   }
 
   const linePath = linePathParts.join(" ");
-
-  const dataPointsSvg = points
-    .filter((_, i) => i % 5 === 0 || i === points.length - 1)
-    .map(
-      (p) =>
-        `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${theme.accent}" stroke="${theme.cardBackground}" stroke-width="2"/>`
-    )
-    .join("");
-
-  const xAxisLabelsSvg = points
-    .filter((_, i) => i % 7 === 0 || i === points.length - 1)
-    .map((p) => {
-      const date = new Date(p.date);
-      return `<text x="${
-        p.x
-      }" y="0" text-anchor="middle" font-size="10" fill="${
-        theme.textSecondary
-      }" font-family="${FONT_FAMILY}" letter-spacing="0.2">${date.getDate()}</text>`;
-    })
-    .join("");
 
   const svg = `<g transform="translate(40, ${startY})">
       <rect x="0" y="0" width="${innerWidth}" height="${
@@ -871,9 +805,6 @@ export function generateInsightCard(
 
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
-  ${generateAnimationStyles(theme)}
-  ${generateGradientDefs(theme)}
-  
   <defs>
     <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:${theme.accent}" />

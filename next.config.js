@@ -15,9 +15,8 @@ const getLocalIPs = () => {
 
 const nextConfig = {
   allowedDevOrigins: getLocalIPs(),
-  experimental: {
-    
-  },
-}
+  poweredByHeader: false,
+  compress: true,
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
