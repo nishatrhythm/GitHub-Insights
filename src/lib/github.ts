@@ -8,7 +8,7 @@ function computeMonthlyContributions(contributionDays: ContributionDay[]): Month
   const monthMap = new Map<string, number>();
 
   for (const day of contributionDays) {
-    const monthKey = day.date.slice(0, 7); // 'YYYY-MM'
+    const monthKey = day.date.slice(0, 7);
     monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + day.contributionCount);
   }
 
@@ -101,7 +101,6 @@ async function fetchHistoricalContributions(
   const currentYear = now.getFullYear();
   const nowIso = now.toISOString();
 
-  // Construct a single batched query with aliases for each year
   const yearQueries = years.map(year => {
     const from = `${year}-01-01T00:00:00Z`;
     const to = year === currentYear ? nowIso : `${year}-12-31T23:59:59Z`;
@@ -170,7 +169,6 @@ function calculateStreaks(contributionDays: ContributionDay[]): { current: Strea
   const seenDates = new Set<string>();
   const uniqueDays: ContributionDay[] = [];
   
-  // Sort chronologically by ISO date string
   const sortedDays = [...contributionDays].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   for (const day of sortedDays) {
     if (!seenDates.has(day.date)) {

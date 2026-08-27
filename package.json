@@ -10,15 +10,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "framer-motion": "^13.1.1",
+    "lucide-react": "^1.34.0",
     "next": "^16.2.10",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "typescript": "5.9.3"
+    "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.0.0"

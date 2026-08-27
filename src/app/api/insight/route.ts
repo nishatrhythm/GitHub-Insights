@@ -32,6 +32,12 @@ export async function GET(request: NextRequest) {
   const hideLangs = searchParams.get('hide_langs');
   const hiddenLanguages = hideLangs ? hideLangs.split(',').map(l => l.trim()).filter(Boolean) : [];
 
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
   if (!username) {
     return new NextResponse(
       generateErrorCard('Username is required', getTheme('github_dark')),
@@ -40,6 +46,30 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'image/svg+xml',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
+          ...corsHeaders,
+        },
+      }
+    );
+  }
+
+  const hasAtLeastOneTelemetry =
+    showGraph ||
+    showLanguages ||
+    showStreak ||
+    showStats ||
+    showHeader ||
+    showSummary ||
+    showProfile;
+
+  if (!hasAtLeastOneTelemetry) {
+    return new NextResponse(
+      generateErrorCard('At least one telemetry module must be enabled', getTheme(themeName)),
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          ...corsHeaders,
         },
       }
     );
@@ -69,6 +99,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'ETag': etag,
           'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600',
+          ...corsHeaders,
         },
       });
     }
@@ -79,6 +110,7 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'image/svg+xml',
         'ETag': etag,
         'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600',
+        ...corsHeaders,
       },
     });
   } catch (error) {
@@ -92,10 +124,23 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'image/svg+xml',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
+          ...corsHeaders,
         },
       }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
 }
 
 function generateErrorCard(message: string, theme: ReturnType<typeof getTheme>): string {

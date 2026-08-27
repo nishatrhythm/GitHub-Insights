@@ -17,6 +17,18 @@ const nextConfig = {
   allowedDevOrigins: getLocalIPs(),
   poweredByHeader: false,
   compress: true,
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, HEAD, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

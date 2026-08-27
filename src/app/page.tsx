@@ -1,127 +1,72 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-
-const Icons = {
-  github: (
-    <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/>
-    </svg>
-  ),
-  gear: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.299.071l1.103-.303c.644-.176 1.392.021 1.82.63.27.385.506.792.704 1.218.315.675.111 1.422-.364 1.891l-.814.806c-.049.048-.098.147-.088.294.016.257.016.515 0 .772-.01.147.04.246.088.294l.814.806c.475.469.679 1.216.364 1.891a7.977 7.977 0 0 1-.704 1.217c-.428.61-1.176.807-1.82.63l-1.102-.302c-.067-.019-.177-.011-.3.071a5.909 5.909 0 0 1-.668.386c-.133.066-.194.158-.211.224l-.29 1.106c-.168.646-.715 1.196-1.458 1.26a8.006 8.006 0 0 1-1.402 0c-.743-.064-1.289-.614-1.458-1.26l-.289-1.106c-.018-.066-.079-.158-.212-.224a5.738 5.738 0 0 1-.668-.386c-.123-.082-.233-.09-.299-.071l-1.103.303c-.644.176-1.392-.021-1.82-.63a8.12 8.12 0 0 1-.704-1.218c-.315-.675-.111-1.422.363-1.891l.815-.806c.049-.048.098-.147.088-.294a6.214 6.214 0 0 1 0-.772c.01-.147-.04-.246-.088-.294l-.815-.806C.635 6.045.431 5.298.746 4.623a7.92 7.92 0 0 1 .704-1.217c.428-.61 1.176-.807 1.82-.63l1.102.302c.067.019.177.011.3-.071.214-.143.437-.272.668-.386.133-.066.194-.158.211-.224l.29-1.106C6.009.645 6.556.095 7.299.03 7.53.01 7.764 0 8 0Zm-.571 1.525c-.036.003-.108.036-.137.146l-.289 1.105c-.147.561-.549.967-.998 1.189-.173.086-.34.183-.5.29-.417.278-.97.423-1.529.27l-1.103-.303c-.109-.03-.175.016-.195.045-.22.312-.412.644-.573.99-.014.031-.021.11.059.19l.815.806c.411.406.562.957.53 1.456a4.709 4.709 0 0 0 0 .582c.032.499-.119 1.05-.53 1.456l-.815.806c-.081.08-.073.159-.059.19.162.346.353.677.573.989.02.03.085.076.195.046l1.102-.303c.56-.153 1.113-.008 1.53.27.161.107.328.204.501.29.447.222.85.629.997 1.189l.289 1.105c.029.109.101.143.137.146a6.6 6.6 0 0 0 1.142 0c.036-.003.108-.036.137-.146l.289-1.105c.147-.561.549-.967.998-1.189.173-.086.34-.183.5-.29.417-.278.97-.423 1.529-.27l1.103.303c.109.029.175-.016.195-.045.22-.313.411-.644.573-.99.014-.031.021-.11-.059-.19l-.815-.806c-.411-.406-.562-.957-.53-1.456a4.709 4.709 0 0 0 0-.582c-.032-.499.119-1.05.53-1.456l.815-.806c.081-.08.073-.159.059-.19a6.464 6.464 0 0 0-.573-.989c-.02-.03-.085-.076-.195-.046l-1.102.303c-.56.153-1.113.008-1.53-.27a4.44 4.44 0 0 0-.501-.29c-.447-.222-.85-.629-.997-1.189l-.289-1.105c-.029-.11-.101-.143-.137-.146a6.6 6.6 0 0 0-1.142 0ZM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9.5 8a1.5 1.5 0 1 0-3.001.001A1.5 1.5 0 0 0 9.5 8Z"/>
-    </svg>
-  ),
-  eye: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/>
-    </svg>
-  ),
-  code: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="m11.28 3.22 4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734L13.94 8l-3.72-3.72a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215Zm-6.56 0a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L2.06 8l3.72 3.72a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L.47 8.53a.75.75 0 0 1 0-1.06Z"/>
-    </svg>
-  ),
-  copy: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/>
-      <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
-    </svg>
-  ),
-  check: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/>
-    </svg>
-  ),
-  heart: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="#db61a2" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-      <path d="m8 14.25.345.666a.75.75 0 0 1-.69 0l-.008-.004-.018-.01a7.152 7.152 0 0 1-.31-.17 22.055 22.055 0 0 1-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.066 22.066 0 0 1-3.744 2.584l-.018.01-.006.003h-.002ZM4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.58 20.58 0 0 0 8 13.393a20.58 20.58 0 0 0 3.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.749.749 0 0 1-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5Z"/>
-    </svg>
-  ),
-  alert: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
-    </svg>
-  ),
-  download: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/>
-      <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/>
-    </svg>
-  ),
-};
-
-const themes = [
-  { id: 'github_light', name: 'GitHub Light', bgColor: '#f6f8fa', accentColor: '#0969da', textColor: '#24292f',},
-  { id: 'github_dark', name: 'GitHub Dark', bgColor: '#0d1117', accentColor: '#238636', textColor: '#e6edf3' },
-  { id: 'radical', name: 'Radical', bgColor: '#141321', accentColor: '#f8d847', textColor: '#a9fef7' },
-  { id: 'tokyonight', name: 'Tokyo Night', bgColor: '#1a1b26', accentColor: '#70a5fd', textColor: '#38bdae' },
-  { id: 'dracula', name: 'Dracula', bgColor: '#282a36', accentColor: '#ff79c6', textColor: '#f8f8f2' },
-  { id: 'synthwave', name: 'Synthwave', bgColor: '#2b213a', accentColor: '#e2571e', textColor: '#e5289e' },
-  { id: 'ocean', name: 'Ocean', bgColor: '#0a192f', accentColor: '#64ffda', textColor: '#8892b0' },
-  { id: 'ocean_radical', name: 'Ocean Radical', bgColor: '#050b14', accentColor: '#fe428e', textColor: '#ccd6f6' },
-   { id: 'neo_green', name: 'Neo Green', bgColor: '#121212', accentColor: '#00c875', textColor: '#a6e22e'},
-];
-
-
-const darkColors = {
-  canvasDefault: '#0d1117',
-  canvasSubtle: '#161b22',
-  canvasInset: '#010409',
-  borderDefault: '#30363d',
-  borderMuted: '#21262d',
-  fgDefault: '#e6edf3',
-  fgMuted: '#7d8590',
-  fgSubtle: '#6e7681',
-  accentFg: '#2f81f7',
-  accentEmphasis: '#1f6feb',
-  successFg: '#3fb950',
-  successEmphasis: '#238636',
-  dangerFg: '#f85149',
-};
-
-
-const lightColors = {
-  canvasDefault: '#ffffff',
-  canvasSubtle: '#f6f8fa',
-  canvasInset: '#f0f3f6',
-  borderDefault: '#d0d7de',
-  borderMuted: '#d8dee4',
-  fgDefault: '#1f2328',
-  fgMuted: '#656d76',
-  fgSubtle: '#6e7781',
-  accentFg: '#0969da',
-  accentEmphasis: '#0969da',
-  successFg: '#1a7f37',
-  successEmphasis: '#1a7f37',
-  dangerFg: '#d1242f',
-};
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Sparkles,
+  Palette,
+  Check,
+  Copy,
+  Download,
+  Code2,
+  Sliders,
+  User,
+  Flame,
+  BarChart3,
+  Activity,
+  Trophy,
+  LineChart,
+  Sun,
+  Moon,
+  Monitor,
+  RotateCw,
+  Search,
+  X,
+  AlertCircle,
+  FileCode,
+  Terminal,
+  History,
+  Plus,
+} from 'lucide-react';
 
 type SiteTheme = 'light' | 'dark' | 'system';
 
-const ThemeIcons = {
-  light: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 1.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0Zm0 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13ZM2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.75.75 0 0 1-1.06 1.06L2.344 3.405a.75.75 0 0 1 0-1.06Zm9.193 9.193a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061ZM0 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8Zm13 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 13 8ZM2.343 13.657a.75.75 0 0 1 0-1.06l1.06-1.061a.75.75 0 0 1 1.061 1.06l-1.06 1.061a.75.75 0 0 1-1.061 0Zm9.193-9.193a.75.75 0 0 1 0-1.06l1.061-1.061a.75.75 0 1 1 1.06 1.06l-1.06 1.061a.75.75 0 0 1-1.061 0Z"/>
+interface CardThemeOption {
+  id: string;
+  name: string;
+  bgColor: string;
+  cardColor: string;
+  accentColor: string;
+  textColor: string;
+}
+
+const CARD_THEMES: CardThemeOption[] = [
+  { id: 'github_dark', name: 'GitHub Dark', bgColor: '#0d1117', cardColor: '#161b22', accentColor: '#58a6ff', textColor: '#c9d1d9' },
+  { id: 'github_light', name: 'GitHub Light', bgColor: '#f6f8fa', cardColor: '#ffffff', accentColor: '#0550ae', textColor: '#24292f' },
+  { id: 'tokyonight', name: 'Tokyo Night', bgColor: '#1a1b26', cardColor: '#24283b', accentColor: '#70a5fd', textColor: '#a9b1d6' },
+  { id: 'dracula', name: 'Dracula', bgColor: '#282a36', cardColor: '#44475a', accentColor: '#ff79c6', textColor: '#f8f8f2' },
+  { id: 'radical', name: 'Radical', bgColor: '#141321', cardColor: '#1a1b27', accentColor: '#fe428e', textColor: '#f8f8f2' },
+  { id: 'synthwave', name: 'Synthwave', bgColor: '#2b213a', cardColor: '#1a1225', accentColor: '#e2571e', textColor: '#e5289e' },
+  { id: 'ocean', name: 'Ocean', bgColor: '#0a192f', cardColor: '#112240', accentColor: '#64ffda', textColor: '#ccd6f6' },
+  { id: 'ocean_radical', name: 'Ocean Radical', bgColor: '#050b14', cardColor: '#0a192f', accentColor: '#fe428e', textColor: '#ccd6f6' },
+  { id: 'neo_green', name: 'Neo Green', bgColor: '#121212', cardColor: '#181818', accentColor: '#00c875', textColor: '#a6e22e' },
+];
+
+const DEMO_USERNAMES = ['mojombo', 'torvalds', 'karpathy', 'sindresorhus', 'gaearon', 'shadcn'];
+const QUICK_EXCLUDE_LANGS = ['HTML', 'CSS', 'Jupyter Notebook', 'SCSS', 'Makefile'];
+
+function GitHubLogo({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" />
     </svg>
-  ),
-  dark: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Zm1.616 1.945a7 7 0 0 1-7.678 7.678 5.499 5.499 0 1 0 7.678-7.678Z"/>
-    </svg>
-  ),
-  system: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M1.75 2.5h12.5a.25.25 0 0 1 .25.25v7.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25v-7.5a.25.25 0 0 1 .25-.25ZM14.25 1H1.75A1.75 1.75 0 0 0 0 2.75v7.5C0 11.216.784 12 1.75 12h3.727l-.5 1.5H3.25a.75.75 0 0 0 0 1.5h9.5a.75.75 0 0 0 0-1.5h-1.727l-.5-1.5h3.727A1.75 1.75 0 0 0 16 10.25v-7.5A1.75 1.75 0 0 0 14.25 1ZM9.477 13.5H6.523l.5-1.5h1.954l.5 1.5Z"/>
-    </svg>
-  ),
-};
+  );
+}
 
 export default function Home() {
   const [username, setUsername] = useState('');
   const [generatedUsername, setGeneratedUsername] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState('github_light');
+  const [selectedTheme, setSelectedTheme] = useState('github_dark');
   const [showGraph, setShowGraph] = useState(true);
   const [showLanguages, setShowLanguages] = useState(true);
   const [showStreak, setShowStreak] = useState(true);
@@ -131,144 +76,148 @@ export default function Home() {
   const [showProfile, setShowProfile] = useState(true);
   const [hiddenLangs, setHiddenLangs] = useState<string[]>([]);
   const [langInput, setLangInput] = useState('');
-  const [copied, setCopied] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [activeCodeTab, setActiveCodeTab] = useState<'markdown' | 'html'>('markdown');
   const [baseUrl, setBaseUrl] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const generatedConfigRef = useRef<{
-    selectedTheme: string;
-    showGraph: boolean;
-    showLanguages: boolean;
-    showStreak: boolean;
-    showStats: boolean;
-    showHeader: boolean;
-    showSummary: boolean;
-    showProfile: boolean;
-    hiddenLangs: string[];
-  } | null>(null);
   const [siteTheme, setSiteTheme] = useState<SiteTheme>('system');
-  const [systemPrefersDark, setSystemPrefersDark] = useState(true);
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(false);
 
-  const resolvedTheme = siteTheme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : siteTheme;
-  const colors = resolvedTheme === 'dark' ? darkColors : lightColors;
-  
   const usernameInputRef = useRef<HTMLInputElement>(null);
-  const CloseIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ display: 'block' }}>
-      <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/>
-    </svg>
-  );
-  
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInteractedThemeRef = useRef(false);
+  const previewSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       setBaseUrl(window.location.origin);
-      
-      const checkMobile = () => setIsMobile(window.innerWidth < 768);
-      checkMobile();
-      window.addEventListener('resize', checkMobile);
 
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
       setSystemPrefersDark(mql.matches);
-      const handleThemeChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
+      const handleThemeChange = (e: MediaQueryListEvent) => {
+        setSystemPrefersDark(e.matches);
+        const currentSaved = localStorage.getItem('site-theme') as SiteTheme | null;
+        const currentMode = currentSaved && ['light', 'dark', 'system'].includes(currentSaved) ? currentSaved : 'system';
+        if (currentMode === 'system') {
+          setSelectedTheme((prev) => {
+            if (prev === 'github_dark' && !e.matches) return 'github_light';
+            if (prev === 'github_light' && e.matches) return 'github_dark';
+            return prev;
+          });
+        }
+      };
       mql.addEventListener('change', handleThemeChange);
 
-      const saved = localStorage.getItem('site-theme') as SiteTheme | null;
-      if (saved && ['light', 'dark', 'system'].includes(saved)) {
-        setSiteTheme(saved);
+      const savedTheme = localStorage.getItem('site-theme') as SiteTheme | null;
+      const activeSiteTheme = savedTheme && ['light', 'dark', 'system'].includes(savedTheme) ? savedTheme : 'system';
+      if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+        setSiteTheme(savedTheme);
       }
 
+      const isSystemDark = mql.matches;
+      const effectiveDark = activeSiteTheme === 'system' ? isSystemDark : activeSiteTheme === 'dark';
+      setSelectedTheme(effectiveDark ? 'github_dark' : 'github_light');
+
+      try {
+        const savedSearches = localStorage.getItem('github_insights_recent_searches');
+        if (savedSearches) {
+          const parsed = JSON.parse(savedSearches);
+          if (Array.isArray(parsed)) {
+            setRecentSearches(parsed.slice(0, 10));
+          }
+        }
+      } catch (e) {}
+
       return () => {
-        window.removeEventListener('resize', checkMobile);
         mql.removeEventListener('change', handleThemeChange);
         if (copyTimeoutRef.current) {
           clearTimeout(copyTimeoutRef.current);
         }
       };
     }
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-      }
-    };
   }, []);
-  
+
+  const resolvedTheme = siteTheme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : siteTheme;
+  const isDark = resolvedTheme === 'dark';
+
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('site-theme', siteTheme);
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
     }
-  }, [siteTheme, isMounted]);
-  
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.body.style.backgroundColor = colors.canvasDefault;
-    }
-  }, [colors.canvasDefault]);
-
-  const isDirty = useMemo(() => {
-    if (!hasLoaded || !generatedConfigRef.current) return false;
-    const g = generatedConfigRef.current;
-    return (
-      g.selectedTheme !== selectedTheme ||
-      g.showGraph !== showGraph ||
-      g.showLanguages !== showLanguages ||
-      g.showStreak !== showStreak ||
-      g.showStats !== showStats ||
-      g.showHeader !== showHeader ||
-      g.showSummary !== showSummary ||
-      g.showProfile !== showProfile ||
-      JSON.stringify(g.hiddenLangs) !== JSON.stringify(hiddenLangs)
-    );
-  }, [hasLoaded, selectedTheme, showGraph, showLanguages, showStreak, showStats, showHeader, showSummary, showProfile, hiddenLangs]);
+  }, [siteTheme, isDark, isMounted]);
 
   const hideLangsParam = hiddenLangs.length > 0 ? `&hide_langs=${encodeURIComponent(hiddenLangs.join(','))}` : '';
   const previewUrl = `/api/insight?username=${generatedUsername}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}`;
 
-  const handleGenerate = () => {
-    if (username.trim()) {
-      setIsGenerating(true);
-      setHasError(false);
-      setHasLoaded(false);
-      generatedConfigRef.current = {
-        selectedTheme,
-        showGraph,
-        showLanguages,
-        showStreak,
-        showStats,
-        showHeader,
-        showSummary,
-        showProfile,
-        hiddenLangs: [...hiddenLangs],
-      };
-      setGeneratedUsername(username.trim());
-      setRefreshKey(Date.now());
-      const checkUrl = `/api/insight?username=${username.trim()}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}&_t=${Date.now()}`;
-      fetch(checkUrl)
-        .then(response => {
-          if (response.ok) {
-            setHasLoaded(true);
-            setIsGenerating(false);
-          } else {
-            setHasError(true);
-            setIsGenerating(false);
-          }
-        })
-        .catch(() => {
+  const triggerGenerate = useCallback((targetUser: string) => {
+    const trimmed = targetUser.trim();
+    if (!trimmed) return;
+
+    setIsGenerating(true);
+    setHasError(false);
+    setHasLoaded(false);
+    setGeneratedUsername(trimmed);
+    setRefreshKey(Date.now());
+
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      setTimeout(() => {
+        if (previewSectionRef.current) {
+          const yOffset = -80;
+          const element = previewSectionRef.current;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 120);
+    }
+
+    const checkUrl = `/api/insight?username=${trimmed}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}&_t=${Date.now()}`;
+    
+    fetch(checkUrl)
+      .then((response) => {
+        if (response.ok) {
+          setHasLoaded(true);
+          setIsGenerating(false);
+
+          setRecentSearches((prev) => {
+            const updated = [trimmed, ...prev.filter((u) => u.toLowerCase() !== trimmed.toLowerCase())].slice(0, 10);
+            try {
+              localStorage.setItem('github_insights_recent_searches', JSON.stringify(updated));
+            } catch (e) {}
+            return updated;
+          });
+        } else {
           setHasError(true);
           setIsGenerating(false);
-        });
-      setTimeout(() => {
-        const previewSection = document.getElementById('preview-section');
-        if (previewSection) {
-          previewSection.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 100);
+      })
+      .catch(() => {
+        setHasError(true);
+        setIsGenerating(false);
+      });
+  }, [selectedTheme, showGraph, showLanguages, showStreak, showStats, showHeader, showSummary, showProfile, hideLangsParam]);
+
+  const handleGenerate = () => {
+    triggerGenerate(username);
+  };
+
+  const handleQuickDemo = (demoUser: string) => {
+    setUsername(demoUser);
+    usernameInputRef.current?.focus();
+  };
+
+  const handleAddLanguage = () => {
+    const cleaned = langInput.trim().replace(/,/g, '');
+    if (cleaned && !hiddenLangs.some((l) => l.toLowerCase() === cleaned.toLowerCase())) {
+      setHiddenLangs((prev) => [...prev, cleaned]);
+      setLangInput('');
     }
   };
 
@@ -278,34 +227,62 @@ export default function Home() {
     }
   };
 
+  const handleSiteThemeChange = (mode: SiteTheme) => {
+    hasInteractedThemeRef.current = true;
+    setSiteTheme(mode);
+    const willBeDark = mode === 'system' ? systemPrefersDark : mode === 'dark';
+    setSelectedTheme((prev) => {
+      if (prev === 'github_dark' && !willBeDark) return 'github_light';
+      if (prev === 'github_light' && willBeDark) return 'github_dark';
+      return prev;
+    });
+  };
+
+  const activeModulesCount =
+    (showProfile ? 1 : 0) +
+    (showSummary ? 1 : 0) +
+    (showHeader ? 1 : 0) +
+    (showStats ? 1 : 0) +
+    (showLanguages ? 1 : 0) +
+    (showStreak ? 1 : 0) +
+    (showGraph ? 1 : 0);
+
+  const handleToggleModule = (checked: boolean, setter: (val: boolean) => void) => {
+    if (!checked && activeModulesCount <= 1) {
+      return;
+    }
+    setter(checked);
+  };
+
   const getMarkdownCode = () => `<p align="center">
-  <img src="${baseUrl}${previewUrl}" alt="GitHub Insights" />
+  <img src="${baseUrl}${previewUrl}" alt="${generatedUsername}'s GitHub Insights" />
 </p>`;
+
   const getHtmlCode = () => `<div align="center">
-  <img src="${baseUrl}${previewUrl}" alt="GitHub Insights" />
+  <img src="${baseUrl}${previewUrl}" alt="${generatedUsername}'s GitHub Insights" />
 </div>`;
+
+  const getDirectUrl = () => `${baseUrl}${previewUrl}`;
 
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text);
-
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
     }
-    
-    setCopied(type);
+    setCopiedType(type);
     copyTimeoutRef.current = setTimeout(() => {
-      setCopied(null);
+      setCopiedType(null);
       copyTimeoutRef.current = null;
-    }, 2000);
+    }, 2200);
   }, []);
 
   const downloadImage = useCallback(async (format: 'png' | 'jpg' | 'svg') => {
     if (!generatedUsername || hasError) return;
-    
+
     try {
       const response = await fetch(`${previewUrl}&_t=${refreshKey}`);
       const svgText = await response.text();
-      
+
       if (format === 'svg') {
         const blob = new Blob([svgText], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
@@ -318,7 +295,7 @@ export default function Home() {
         const img = new Image();
         const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const svgUrl = URL.createObjectURL(svgBlob);
-        
+
         img.onload = () => {
           const canvas = document.createElement('canvas');
           canvas.width = img.width * 2;
@@ -331,7 +308,7 @@ export default function Home() {
               ctx.fillRect(0, 0, img.width, img.height);
             }
             ctx.drawImage(img, 0, 0);
-            
+
             const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
             canvas.toBlob((blob) => {
               if (blob) {
@@ -353,502 +330,700 @@ export default function Home() {
     }
   }, [generatedUsername, hasError, previewUrl, refreshKey]);
 
-  const fontFamily = "'Google Sans', 'Google Sans Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-  const monoFontFamily = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace";
-
   return (
-    <main style={{
-      minHeight: '100vh',
-      backgroundColor: colors.canvasDefault,
-      color: colors.fgDefault,
-      fontFamily,
-      fontSize: '14px',
-      lineHeight: 1.5,
-    }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: resolvedTheme === 'dark' ? 'rgba(22, 27, 34, 0.75)' : 'rgba(246, 248, 250, 0.75)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${resolvedTheme === 'dark' ? 'rgba(48, 54, 61, 0.6)' : 'rgba(208, 215, 222, 0.6)'}`,
-        boxShadow: resolvedTheme === 'dark'
-          ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255,255,255,0.04) inset'
-          : '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 0 rgba(255,255,255,0.8) inset',
-        padding: '10px 24px',
-      }}>
-        <div style={{
-          maxWidth: '960px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-        }}>
-          <div style={{ color: colors.fgDefault }}>
-            {Icons.github}
-          </div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{
-              fontSize: '20px',
-              fontWeight: 600,
-              color: colors.fgDefault,
-              margin: 0,
-              fontFamily,
-            }}>
-              GitHub Insights
-            </h1>
-            <p style={{
-              fontSize: '14px',
-              color: colors.fgMuted,
-              margin: '2px 0 0 0',
-              fontFamily,
-              display: isMobile ? 'none' : 'block',
-            }}>
-              Generate beautiful stats cards for your GitHub profile
-            </p>
-          </div>
-          
-          <div style={{
+      
+      <motion.header
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          backgroundColor: 'var(--header-bg)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid var(--border-subtle)',
+          transition: 'background-color 0.3s ease, border-color 0.3s ease',
+        }}
+      >
+        <div
+          className="navbar-container"
+          style={{
+            maxWidth: '1240px',
+            margin: '0 auto',
+            padding: '0 20px',
+            height: '64px',
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: colors.canvasDefault,
-            border: `1px solid ${colors.borderDefault}`,
-            borderRadius: '6px',
-            padding: '2px',
-            gap: '2px',
-          }}>
-            {(['light', 'dark', 'system'] as SiteTheme[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setSiteTheme(mode)}
-                title={mode.charAt(0).toUpperCase() + mode.slice(1)}
+            justifyContent: 'space-between',
+            gap: '8px',
+          }}
+        >
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexShrink: 0 }}>
+            <img
+              src="/icon.png"
+              alt="GitHub Insights Logo"
+              width={32}
+              height={32}
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              className="no-drag"
+              style={{
+                borderRadius: '8px',
+                display: 'block',
+                flexShrink: 0,
+                userSelect: 'none',
+              }}
+            />
+            <div>
+              <span
+                className="navbar-title"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '28px',
-                  padding: 0,
-                  backgroundColor: siteTheme === mode ? colors.accentEmphasis : 'transparent',
-                  color: siteTheme === mode ? '#ffffff' : colors.fgMuted,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseOver={(e) => {
-                  if (siteTheme !== mode) {
-                    e.currentTarget.style.backgroundColor = colors.borderMuted;
-                    e.currentTarget.style.color = colors.fgDefault;
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (siteTheme !== mode) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = colors.fgMuted;
-                  }
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.3px',
+                  color: 'var(--text-main)',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {ThemeIcons[mode]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      <div style={{
-        maxWidth: '960px',
-        margin: '0 auto',
-        padding: isMobile ? '12px' : '16px',
-      }}>
-        <style>{`
-          @media (min-width: 768px) {
-            .main-container { padding: 24px !important; }
-          }
-        `}</style>
-        
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-            paddingBottom: '8px',
-            borderBottom: `1px solid ${colors.borderMuted}`,
-          }}>
-            <span style={{ color: colors.fgMuted, display: 'flex' }}>{Icons.gear}</span>
-            <h2 style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.fgDefault,
-              margin: 0,
-              fontFamily,
-            }}>
-              Configuration
-            </h2>
+                GitHub Insights
+              </span>
+            </div>
           </div>
 
           
-          <div style={{
-            backgroundColor: colors.canvasSubtle,
-            border: `1px solid ${colors.borderDefault}`,
-            borderRadius: '6px',
-            padding: '16px',
-            marginBottom: '12px',
-          }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.fgDefault,
-              marginBottom: '8px',
-              fontFamily,
-            }}>
-              GitHub Username
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '150px' }}>
-                <input
-                  ref={usernameInputRef}
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Enter username"
-                  style={{
-                    width: '100%',
-                    padding: '8px 32px 8px 12px',
-                    fontSize: '14px',
-                    fontFamily,
-                    lineHeight: '20px',
-                    color: colors.fgDefault,
-                    backgroundColor: colors.canvasDefault,
-                    border: `1px solid ${colors.borderDefault}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = colors.accentEmphasis;
-                    e.target.style.boxShadow = `0 0 0 3px rgba(31, 111, 235, 0.3)`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = colors.borderDefault;
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-                {username && (
+          <div className="navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            
+            <div
+              className="theme-toggle-container"
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '3px',
+                borderRadius: '12px',
+                backgroundColor: 'var(--theme-switch-bg)',
+                border: '1px solid var(--theme-switch-border)',
+                gap: '2px',
+              }}
+            >
+              {(['light', 'dark', 'system'] as SiteTheme[]).map((mode) => {
+                const isSelected = siteTheme === mode;
+                return (
                   <button
-                    onClick={() => {
-                      setUsername('');
-                      setTimeout(() => {
-                        usernameInputRef.current?.focus();
-                      }, 0);
-                    }}
+                    key={mode}
+                    onClick={() => handleSiteThemeChange(mode)}
+                    title={`Switch to ${mode} mode`}
+                    className="theme-toggle-btn"
                     style={{
-                      position: 'absolute',
-                      right: '6px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
+                      position: 'relative',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '20px',
-                      height: '20px',
-                      padding: 0,
-                      backgroundColor: 'transparent',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
                       border: 'none',
-                      borderRadius: '3px',
-                      color: colors.fgMuted,
+                      backgroundColor: 'transparent',
+                      color: isSelected ? 'var(--theme-pill-color)' : 'var(--text-muted)',
                       cursor: 'pointer',
+                      zIndex: 1,
+                      transition: 'color 0.2s ease',
                     }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.color = colors.fgDefault;
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.color = colors.fgMuted;
-                    }}
-                    title="Clear"
                   >
-                    {CloseIcon}
+                    {isMounted && isSelected && (
+                      <motion.div
+                        layoutId="active-theme-pill"
+                        transition={
+                          hasInteractedThemeRef.current
+                            ? { type: 'spring', stiffness: 500, damping: 35 }
+                            : { duration: 0 }
+                        }
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--theme-pill-bg)',
+                          border: '1px solid var(--theme-pill-border)',
+                          boxShadow: 'var(--theme-pill-shadow)',
+                          zIndex: -1,
+                        }}
+                      />
+                    )}
+                    {mode === 'light' && <Sun size={14} />}
+                    {mode === 'dark' && <Moon size={14} />}
+                    {mode === 'system' && <Monitor size={14} />}
                   </button>
-                )}
-              </div>
-              <button
-                onClick={handleGenerate}
-                disabled={!username.trim()}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  fontFamily,
-                  lineHeight: '20px',
-                  color: !username.trim() ? colors.fgMuted : '#ffffff',
-                  backgroundColor: !username.trim()
-                    ? colors.canvasSubtle
-                    : isDirty
-                      ? (resolvedTheme === 'dark' ? '#9a6700' : '#bf8700')
-                      : colors.successEmphasis,
-                  border: `1px solid ${
-                    !username.trim()
-                      ? colors.borderDefault
-                      : isDirty
-                        ? (resolvedTheme === 'dark' ? '#9a6700' : '#bf8700')
-                        : colors.successEmphasis
-                  }`,
-                  borderRadius: '6px',
-                  cursor: !username.trim() ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap',
-                  flex: '0 0 auto',
-                  boxShadow: isDirty && username.trim() ? `0 0 0 3px ${resolvedTheme === 'dark' ? 'rgba(154,103,0,0.4)' : 'rgba(191,135,0,0.3)'}` : 'none',
-                }}
-                onMouseOver={(e) => {
-                    if (username.trim()) {
-                      e.currentTarget.style.backgroundColor = isDirty
-                        ? (resolvedTheme === 'dark' ? '#b07800' : '#d4940a')
-                        : colors.successFg;
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (username.trim()) {
-                      e.currentTarget.style.backgroundColor = isDirty
-                        ? (resolvedTheme === 'dark' ? '#9a6700' : '#bf8700')
-                        : colors.successEmphasis;
-                    }
-                  }}
-                >
-                  {isDirty ? 'Update Card' : 'Generate'}
-                </button>
+                );
+              })}
             </div>
+
+            
+            <a
+              href="https://github.com/nishatrhythm/GitHub-Insights"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary star-btn"
+              title="Star on GitHub"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                flexShrink: 0,
+              }}
+            >
+              <GitHubLogo size={14} />
+              <span className="star-btn-text" style={{ fontSize: '13px', fontWeight: 600 }}>Star</span>
+            </a>
           </div>
+        </div>
+      </motion.header>
+
+      
+      <main className="main-content" style={{ flex: 1, maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '36px 20px 60px' }}>
+        
+        
+        <section className="hero-container" style={{ textAlign: 'center', maxWidth: '850px', margin: '0 auto 36px' }}>
+
+          <motion.h1
+            className="hero-title"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            style={{
+              fontSize: 'clamp(24px, 3.8vw, 36px)',
+              fontWeight: 800,
+              letterSpacing: '-0.8px',
+              lineHeight: 1.25,
+              marginBottom: '12px',
+              color: 'var(--text-main)',
+              textWrap: 'balance',
+            }}
+          >
+            Elegant telemetry for your{' '}
+            <span
+              style={{
+                background: 'var(--accent-gradient)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              GitHub profile
+            </span>
+          </motion.h1>
+
+          <motion.p
+            className="hero-desc"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            style={{
+              fontSize: '15px',
+              lineHeight: 1.5,
+              color: 'var(--text-muted)',
+              marginBottom: '20px',
+            }}
+          >
+            Live analytics and contribution cards for your README.
+          </motion.p>
 
           
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: '12px',
-          }}>
-            
-            <div style={{
-              backgroundColor: colors.canvasSubtle,
-              border: `1px solid ${colors.borderDefault}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '10px',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill={colors.fgMuted} style={{ display: 'block', flexShrink: 0 }}>
-                  <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Z"/>
-                </svg>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: colors.fgDefault,
-                  fontFamily,
-                }}>
-                  Card Theme
-                </span>
-              </div>
-              <div style={{
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.26 }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 500, letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+              Try with popular profiles
+            </span>
+            <div
+              style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '6px',
-              }}>
-                {themes.map((theme) => (
-                  <button
-                    key={theme.id}
-                    onClick={() => setSelectedTheme(theme.id)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '5px 10px',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      fontFamily,
-                      color: selectedTheme === theme.id ? '#ffffff' : colors.fgDefault,
-                      backgroundColor: selectedTheme === theme.id ? colors.accentEmphasis : colors.canvasDefault,
-                      border: `1px solid ${selectedTheme === theme.id ? colors.accentEmphasis : colors.borderDefault}`,
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: 'all 0.1s ease',
-                    }}
-                    onMouseOver={(e) => {
-                      if (selectedTheme !== theme.id) {
-                        e.currentTarget.style.borderColor = colors.fgMuted;
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (selectedTheme !== theme.id) {
-                        e.currentTarget.style.borderColor = colors.borderDefault;
-                      }
-                    }}
-                  >
-                    <span style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '2px',
-                      backgroundColor: theme.bgColor,
-                      border: `2px solid ${theme.accentColor}`,
-                      flexShrink: 0,
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}>
-                      <span style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: '40%',
-                        backgroundColor: theme.accentColor,
-                        opacity: 0.3,
-                      }} />
-                    </span>
-                    {theme.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div style={{
-              backgroundColor: colors.canvasSubtle,
-              border: `1px solid ${colors.borderDefault}`,
-              borderRadius: '6px',
-              padding: '16px',
-            }}>
-              <div style={{
-                display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px',
-                marginBottom: '10px',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill={colors.fgMuted} style={{ display: 'block', flexShrink: 0 }}>
-                  <path d="M5.75 7.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5a.75.75 0 0 1 .75-.75Zm5.25.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5Z"/>
-                  <path d="M6 1a6 6 0 0 0-6 6v2a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6V7a6 6 0 0 0-6-6H6Zm4 1.5a4.5 4.5 0 0 1 4.5 4.5v2a4.5 4.5 0 0 1-4.5 4.5H6A4.5 4.5 0 0 1 1.5 9V7A4.5 4.5 0 0 1 6 2.5h4Z"/>
-                </svg>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: colors.fgDefault,
-                  fontFamily,
-                }}>
-                  Sections
-                </span>
+              }}
+            >
+              {DEMO_USERNAMES.map((user) => (
+                <button
+                  key={user}
+                  onClick={() => handleQuickDemo(user)}
+                  className="btn-secondary"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11.5px',
+                    padding: '4px 9px',
+                    borderRadius: '8px',
+                  }}
+                >
+                  @{user}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            gap: '28px',
+            alignItems: 'start',
+          }}
+        >
+          
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+          >
+            
+            
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    padding: '6px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.08)',
+                    color: isDark ? '#60a5fa' : '#2563eb',
+                    display: 'flex',
+                  }}
+                >
+                  <User size={16} />
+                </div>
+                <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Target Account
+                </h2>
               </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                gap: '6px 16px',
-              }}>
-                {[
-                  { id: 'profile', label: 'Name & Username', checked: showProfile, onChange: setShowProfile },
-                  { id: 'summary', label: 'Summary Info', checked: showSummary, onChange: setShowSummary },
-                  { id: 'header', label: 'Monthly Chart', checked: showHeader, onChange: setShowHeader },
-                  { id: 'stats', label: 'GitHub Stats', checked: showStats, onChange: setShowStats },
-                  { id: 'languages', label: 'Top Languages', checked: showLanguages, onChange: setShowLanguages },
-                  { id: 'streak', label: 'Streak Stats', checked: showStreak, onChange: setShowStreak },
-                  { id: 'graph', label: 'Contribution Graph', checked: showGraph, onChange: setShowGraph },
-                ].map((option) => (
-                  <label
-                    key={option.id}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ position: 'absolute', left: '14px', color: 'var(--text-subtle)', display: 'flex' }}>
+                    <Search size={16} />
+                  </div>
+                  <input
+                    ref={usernameInputRef}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Enter GitHub username..."
+                    className="input-field"
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      color: colors.fgDefault,
-                      fontFamily,
-                      padding: '3px 0',
+                      width: '100%',
+                      padding: '11px 40px 11px 40px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-field)',
+                      backgroundColor: 'var(--bg-field)',
+                      color: 'var(--text-main)',
+                      fontSize: '14px',
+                      outline: 'none',
                     }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={option.checked}
-                      onChange={(e) => option.onChange(e.target.checked)}
-                      style={{
-                        width: '15px',
-                        height: '15px',
-                        accentColor: colors.accentEmphasis,
-                        cursor: 'pointer',
+                  />
+                  {username && (
+                    <button
+                      onClick={() => {
+                        setUsername('');
+                        usernameInputRef.current?.focus();
                       }}
-                    />
-                    {option.label}
-                  </label>
-                ))}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        padding: '4px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                
+                {recentSearches.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-subtle)' }}>
+                        <History size={12} />
+                        <span>Recent searches:</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setRecentSearches([]);
+                          try {
+                            localStorage.removeItem('github_insights_recent_searches');
+                          } catch (e) {}
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-subtle)',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          padding: '0 2px',
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                        onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-subtle)')}
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {recentSearches.map((recentUser) => (
+                        <button
+                          key={recentUser}
+                          onClick={() => {
+                            setUsername(recentUser);
+                            usernameInputRef.current?.focus();
+                          }}
+                          className="btn-secondary"
+                          style={{
+                            padding: '3px 8px',
+                            fontSize: '11px',
+                            fontFamily: 'var(--font-mono)',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          @{recentUser}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleGenerate}
+                  disabled={!username.trim() || isGenerating}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '12px 18px',
+                    fontSize: '14px',
+                  }}
+                >
+                  {isGenerating ? (
+                    <>
+                      <RotateCw size={16} className="animate-spin" />
+                      <span>Fetching Telemetry...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      <span>Generate Insights</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
+
             
-            <div style={{
-              backgroundColor: colors.canvasSubtle,
-              border: `1px solid ${colors.borderDefault}`,
-              borderRadius: '6px',
-              padding: '16px',
-              gridColumn: isMobile ? 'auto' : '1 / -1',
-            }}>
-              <div style={{
-                display: isMobile ? 'block' : 'flex',
-                alignItems: 'flex-start',
-                gap: '16px',
-              }}>
-                <div style={{
-                  flex: '0 0 auto',
-                  marginBottom: isMobile ? '8px' : 0,
-                }}>
-                  <div style={{
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    padding: '6px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? 'rgba(168, 85, 247, 0.15)' : 'rgba(147, 51, 234, 0.08)',
+                    color: isDark ? '#c084fc' : '#9333ea',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    marginBottom: '4px',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill={colors.fgMuted} style={{ display: 'block', flexShrink: 0 }}>
-                      <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l-2.573 2.573A1.458 1.458 0 0 1 4 13.543V12H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h4.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25ZM6 7.28l-.97.97a.75.75 0 0 1-1.06-1.06l1.5-1.5a.75.75 0 0 1 1.06 0l1.5 1.5a.75.75 0 0 1-1.06 1.06L6 7.28Zm3.22 1.22a.75.75 0 0 1 1.06 0l1.5 1.5a.75.75 0 0 1-1.06 1.06L10 10.28l-.72.72a.75.75 0 0 1-1.06-1.06l1.5-1.5Z"/>
-                    </svg>
-                    <span style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: colors.fgDefault,
-                      fontFamily,
-                    }}>
-                      Hide Languages
-                    </span>
-                  </div>
-                  <p style={{
-                    fontSize: '12px',
-                    color: colors.fgMuted,
-                    margin: 0,
-                    fontFamily,
-                    maxWidth: isMobile ? 'none' : '220px',
-                    lineHeight: 1.4,
-                  }}>
-                    Exclude languages from your top languages chart
-                  </p>
-                </div>
-                <div style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 8px',
-                  backgroundColor: colors.canvasDefault,
-                  border: `1px solid ${colors.borderDefault}`,
-                  borderRadius: '6px',
-                  minHeight: '30px',
-                  cursor: 'text',
-                }}
-                onClick={() => {
-                  const input = document.getElementById('lang-input') as HTMLInputElement;
-                  input?.focus();
-                }}
+                  }}
                 >
+                  <Palette size={16} />
+                </div>
+                <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Card Theme
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
+                  gap: '10px',
+                }}
+              >
+                {CARD_THEMES.map((theme) => {
+                  const isSelected = selectedTheme === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      onClick={() => setSelectedTheme(theme.id)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        border: '1px solid',
+                        borderColor: isSelected ? 'var(--primary)' : 'var(--border-option)',
+                        backgroundColor: isSelected ? 'var(--bg-card-hover)' : 'var(--bg-subtle)',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? '0 0 0 1px var(--primary), 0 0 12px var(--primary-glow)' : 'none',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '18px',
+                            borderRadius: '5px',
+                            backgroundColor: theme.bgColor,
+                            border: '1px solid var(--border-field)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '0 4px',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '5px',
+                              height: '5px',
+                              borderRadius: '50%',
+                              backgroundColor: theme.accentColor,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
+                            style={{
+                              height: '2.5px',
+                              flex: 1,
+                              borderRadius: '2px',
+                              backgroundColor: theme.accentColor,
+                              opacity: 0.8,
+                            }}
+                          />
+                        </div>
+
+                        {isSelected && (
+                          <div
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              backgroundColor: 'var(--primary)',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Check size={10} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: isSelected ? 600 : 500,
+                          color: isSelected ? 'var(--primary)' : 'var(--text-main)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {theme.name}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    padding: '6px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(5, 150, 105, 0.08)',
+                    color: isDark ? '#34d399' : '#059669',
+                    display: 'flex',
+                  }}
+                >
+                  <Sliders size={16} />
+                </div>
+                <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Active Telemetry Modules
+                </h2>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { id: 'profile', label: 'Identity Header', desc: 'Name, handle, location & join date', checked: showProfile, setter: setShowProfile, icon: User },
+                  { id: 'summary', label: '12-Month Summary', desc: 'Yearly contributions & public repos', checked: showSummary, setter: setShowSummary, icon: Flame },
+                  { id: 'header', label: 'Monthly Trend', desc: 'Month-by-month volume curve', checked: showHeader, setter: setShowHeader, icon: BarChart3 },
+                  { id: 'stats', label: 'Metric Ratings', desc: 'Stars, PRs, issues & letter grade', checked: showStats, setter: setShowStats, icon: Activity },
+                  { id: 'languages', label: 'Top Languages', desc: 'Most utilized languages breakdown', checked: showLanguages, setter: setShowLanguages, icon: Code2 },
+                  { id: 'streak', label: 'Streak Metrics', desc: 'Active & all-time longest streaks', checked: showStreak, setter: setShowStreak, icon: Trophy },
+                  { id: 'graph', label: '31-Day Activity', desc: 'Daily contribution density chart', checked: showGraph, setter: setShowGraph, icon: LineChart },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isLastActive = item.checked && activeModulesCount <= 1;
+
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        backgroundColor: item.checked ? 'var(--bg-card)' : 'var(--bg-subtle)',
+                        border: '1px solid var(--border-option)',
+                        boxShadow: item.checked ? 'var(--shadow-sm)' : 'none',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div
+                          style={{
+                            padding: '6px',
+                            borderRadius: '8px',
+                            backgroundColor: item.checked ? 'var(--bg-subtle)' : 'var(--bg-card)',
+                            color: item.checked ? 'var(--primary)' : 'var(--text-subtle)',
+                            display: 'flex',
+                            border: '1px solid var(--border-option)',
+                            boxShadow: item.checked ? 'var(--shadow-sm)' : 'none',
+                          }}
+                        >
+                          <Icon size={14} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: item.checked ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                            {item.label}
+                          </div>
+                          <div style={{ fontSize: '11px', color: item.checked ? 'var(--text-muted)' : 'var(--text-subtle)' }}>
+                            {item.desc}
+                          </div>
+                        </div>
+                      </div>
+
+                      <label
+                        className="switch"
+                        title={isLastActive ? 'At least one telemetry module must remain enabled' : undefined}
+                        style={{
+                          opacity: isLastActive ? 0.6 : 1,
+                          cursor: isLastActive ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          disabled={isLastActive}
+                          onChange={(e) => handleToggleModule(e.target.checked, item.setter)}
+                        />
+                        <span className="slider" />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <div
+                  style={{
+                    padding: '6px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.08)',
+                    color: isDark ? '#fbbf24' : '#d97706',
+                    display: 'flex',
+                  }}
+                >
+                  <FileCode size={16} />
+                </div>
+                <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Exclude Specific Languages
+                </h2>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                Hide markup, styling, or auto-generated languages from the language breakdown chart.
+              </p>
+
+              
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <input
+                  type="text"
+                  value={langInput}
+                  onChange={(e) => setLangInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddLanguage();
+                    }
+                  }}
+                  placeholder="Enter language name..."
+                  className="input-field"
+                  style={{
+                    flex: 1,
+                    padding: '9px 12px',
+                    fontSize: '13px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-field)',
+                    backgroundColor: 'var(--bg-field)',
+                    color: 'var(--text-main)',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={handleAddLanguage}
+                  disabled={!langInput.trim()}
+                  style={{
+                    padding: '9px 16px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    borderRadius: '10px',
+                    border: langInput.trim() ? '1px solid var(--primary)' : '1px solid var(--border-option)',
+                    backgroundColor: langInput.trim() ? 'var(--primary)' : 'var(--bg-card)',
+                    color: langInput.trim() ? '#ffffff' : 'var(--text-muted)',
+                    cursor: langInput.trim() ? 'pointer' : 'not-allowed',
+                    opacity: langInput.trim() ? 1 : 0.6,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: langInput.trim() ? '0 2px 8px var(--primary-glow)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Plus size={14} />
+                  <span>Add</span>
+                </button>
+              </div>
+
+              
+              {hiddenLangs.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                   {hiddenLangs.map((lang) => (
                     <span
                       key={lang}
@@ -856,563 +1031,506 @@ export default function Home() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        padding: '2px 8px',
+                        padding: '4px 9px',
+                        borderRadius: '8px',
                         fontSize: '12px',
                         fontWeight: 500,
-                        fontFamily,
-                        color: colors.accentFg,
-                        backgroundColor: resolvedTheme === 'dark' ? 'rgba(47, 129, 247, 0.15)' : 'rgba(9, 105, 218, 0.1)',
-                        borderRadius: '12px',
-                        border: `1px solid ${resolvedTheme === 'dark' ? 'rgba(47, 129, 247, 0.3)' : 'rgba(9, 105, 218, 0.25)'}`,
-                        lineHeight: '18px',
+                        backgroundColor: 'var(--bg-card)',
+                        color: 'var(--text-main)',
+                        border: '1px solid var(--border-option)',
+                        boxShadow: 'var(--shadow-sm)',
                       }}
                     >
                       {lang}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setHiddenLangs(prev => prev.filter(l => l !== lang));
-                        }}
+                        onClick={() => setHiddenLangs((prev) => prev.filter((l) => l !== lang))}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '14px',
-                          height: '14px',
-                          padding: 0,
-                          backgroundColor: 'transparent',
+                          background: 'transparent',
                           border: 'none',
-                          borderRadius: '50%',
-                          color: colors.accentFg,
+                          color: 'var(--text-muted)',
                           cursor: 'pointer',
-                          fontSize: '14px',
-                          lineHeight: 1,
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.backgroundColor = resolvedTheme === 'dark' ? 'rgba(47, 129, 247, 0.3)' : 'rgba(9, 105, 218, 0.2)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
+                          display: 'flex',
+                          padding: 0,
                         }}
                       >
-                        ×
+                        <X size={12} />
                       </button>
                     </span>
                   ))}
-                  <input
-                    id="lang-input"
-                    type="text"
-                    value={langInput}
-                    onChange={(e) => setLangInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.key === 'Enter' || e.key === ',') && langInput.trim()) {
-                        e.preventDefault();
-                        const lang = langInput.trim().replace(/,/g, '');
-                        if (lang && !hiddenLangs.some(l => l.toLowerCase() === lang.toLowerCase())) {
-                          setHiddenLangs(prev => [...prev, lang]);
-                        }
-                        setLangInput('');
-                      } else if (e.key === 'Backspace' && !langInput && hiddenLangs.length > 0) {
-                        setHiddenLangs(prev => prev.slice(0, -1));
-                      }
-                    }}
-                    placeholder={hiddenLangs.length === 0 ? 'e.g. HTML, CSS, JavaScript...' : ''}
-                    style={{
-                      flex: 1,
-                      minWidth: '120px',
-                      padding: '2px 4px',
-                      fontSize: '14px',
-                      fontFamily,
-                      color: colors.fgDefault,
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      lineHeight: '20px',
-                    }}
-                  />
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="preview-section" style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: isDirty && hasLoaded && !isGenerating ? '8px' : '12px',
-            paddingBottom: '8px',
-            borderBottom: `1px solid ${colors.borderMuted}`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: colors.fgMuted, display: 'flex' }}>{Icons.eye}</span>
-              <h2 style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: colors.fgDefault,
-                margin: 0,
-                fontFamily,
-              }}>
-                Preview
-              </h2>
-            </div>
-            
-            {generatedUsername && !hasError && !isGenerating && hasLoaded && (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {(['svg', 'png', 'jpg'] as const).map((format) => (
-                  <button
-                    key={format}
-                    onClick={() => downloadImage(format)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '4px 10px',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      fontFamily,
-                      color: colors.fgDefault,
-                      backgroundColor: colors.canvasSubtle,
-                      border: `1px solid ${colors.borderDefault}`,
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.borderMuted;
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.canvasSubtle;
-                    }}
-                  >
-                    {Icons.download}
-                    {format.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {isDirty && hasLoaded && !isGenerating && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '8px 12px',
-              marginBottom: '8px',
-              backgroundColor: resolvedTheme === 'dark' ? 'rgba(154,103,0,0.15)' : 'rgba(191,135,0,0.1)',
-              border: `1px solid ${resolvedTheme === 'dark' ? 'rgba(154,103,0,0.5)' : 'rgba(191,135,0,0.4)'}`,
-              borderRadius: '6px',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill={resolvedTheme === 'dark' ? '#d29922' : '#9a6700'} style={{ display: 'block', flexShrink: 0 }}>
-                  <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
-                </svg>
-                <span style={{
-                  fontSize: '12px',
-                  fontFamily,
-                  color: resolvedTheme === 'dark' ? '#d29922' : '#7d4e00',
-                  fontWeight: 500,
-                }}>
-                  Settings changed — click <strong>Update Card</strong> to regenerate the preview.
-                </span>
-              </div>
-              <button
-                onClick={handleGenerate}
-                disabled={!username.trim()}
-                style={{
-                  flexShrink: 0,
-                  padding: '6px 10px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  fontFamily,
-                  color: '#ffffff',
-                  backgroundColor: resolvedTheme === 'dark' ? '#9a6700' : '#bf8700',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = resolvedTheme === 'dark' ? '#b07800' : '#d4940a'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = resolvedTheme === 'dark' ? '#9a6700' : '#bf8700'}
-              >
-                Update Card
-              </button>
-            </div>
-          )}
+              )}
 
-          <div style={{
-            backgroundColor: colors.canvasInset,
-            border: `1px solid ${colors.borderDefault}`,
-            borderRadius: '6px',
-            padding: isMobile ? '16px' : '24px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '300px',
-            overflow: 'auto',
-          }}>
-            {!isMounted ? (
-              <span style={{ color: colors.fgMuted, fontFamily }}>Loading...</span>
-            ) : !generatedUsername ? (
-              <div style={{ textAlign: 'center', padding: isMobile ? '0 8px' : '0' }}>
-                <div style={{ 
-                  color: colors.fgMuted, 
-                  fontFamily,
-                  fontSize: isMobile ? '15px' : '16px',
-                  marginBottom: '8px',
-                  lineHeight: 1.4,
-                }}>
-                  Enter a GitHub username and click Generate
-                </div>
-                <div style={{ 
-                  color: colors.fgSubtle, 
-                  fontFamily,
-                  fontSize: isMobile ? '12px' : '13px',
-                  lineHeight: 1.4,
-                }}>
-                  Your insight card preview will appear here
-                </div>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                <span style={{ color: 'var(--text-subtle)' }}>Quick exclude:</span>
+                {QUICK_EXCLUDE_LANGS.map((quickLang) => {
+                  const isHidden = hiddenLangs.some((l) => l.toLowerCase() === quickLang.toLowerCase());
+                  return (
+                    <button
+                      key={quickLang}
+                      onClick={() => {
+                        if (isHidden) {
+                          setHiddenLangs((prev) => prev.filter((l) => l.toLowerCase() !== quickLang.toLowerCase()));
+                        } else {
+                          setHiddenLangs((prev) => [...prev, quickLang]);
+                        }
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        border: isHidden ? '1px solid var(--primary)' : '1px solid var(--border-subtle)',
+                        backgroundColor: isHidden ? 'var(--primary-glow)' : 'transparent',
+                        color: isHidden ? 'var(--primary)' : 'var(--text-muted)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {isHidden ? <Check size={10} /> : <Plus size={10} />}
+                      <span>{quickLang}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                {isGenerating && (
-                  <div style={{ 
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    textAlign: 'center',
-                    zIndex: 10,
-                    backgroundColor: resolvedTheme === 'dark' ? 'rgba(1, 4, 9, 0.85)' : 'rgba(246, 248, 250, 0.92)',
-                    border: `1px solid ${colors.borderDefault}`,
-                    boxShadow: resolvedTheme === 'dark' ? '0 4px 24px rgba(0,0,0,0.5)' : '0 4px 24px rgba(0,0,0,0.12)',
-                    padding: isMobile ? '12px 10px' : '24px',
-                    borderRadius: '8px',
-                    width: isMobile ? 'calc(100vw - 56px)' : 'auto',
-                    maxWidth: isMobile ? '260px' : 'none',
-                    boxSizing: 'border-box',
-                  }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      border: `3px solid ${colors.borderDefault}`,
-                      borderTopColor: colors.accentFg,
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                      margin: '0 auto 12px',
-                    }} />
-                    <span style={{ color: colors.fgMuted, fontFamily }}>
-                      Generating preview for <strong style={{ color: colors.fgDefault }}>{generatedUsername}</strong>...<br />
-                      <span style={{ fontSize: '12px', color: colors.fgSubtle }}>This may take a while</span>
-                    </span>
-                    <style>{`
-                      @keyframes spin {
-                        to { transform: rotate(360deg); }
-                      }
-                    `}</style>
+            </div>
+
+          </motion.div>
+
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '84px' }}
+          >
+            
+            
+            <div ref={previewSectionRef} id="preview-section" className="glass-panel" style={{ overflow: 'hidden', padding: 0 }}>
+              
+              
+              <div
+                style={{
+                  padding: '12px 18px',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444', opacity: 0.8 }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#f59e0b', opacity: 0.8 }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10b981', opacity: 0.8 }} />
+                  </div>
+                  <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                    {generatedUsername ? `${generatedUsername}-insights.svg` : 'preview.svg'}
+                  </span>
+                </div>
+
+                {generatedUsername && !hasError && hasLoaded && !isGenerating && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {(['svg', 'png', 'jpg'] as const).map((fmt) => (
+                      <button
+                        key={fmt}
+                        onClick={() => downloadImage(fmt)}
+                        className="btn-secondary"
+                        style={{ fontSize: '11px', padding: '4px 8px' }}
+                      >
+                        <Download size={12} />
+                        <span>{fmt.toUpperCase()}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                {hasError ? (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: isMobile ? '20px 0' : '40px 20px',
-                  }}>
-                    <div style={{
+              </div>
+
+              
+              <div
+                style={{
+                  padding: '28px 20px',
+                  backgroundColor: 'var(--bg-inset)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '340px',
+                  overflow: 'auto',
+                }}
+              >
+                {!isMounted ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-subtle)' }}>
+                    <RotateCw size={16} className="animate-spin" />
+                    <span>Loading Studio...</span>
+                  </div>
+                ) : !generatedUsername ? (
+                  <div style={{ textAlign: 'center', maxWidth: '320px', padding: '20px 0' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        margin: '0 auto 12px',
+                        backgroundColor: 'var(--bg-card)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'var(--shadow-sm)',
+                      }}
+                    >
+                      <Activity size={22} />
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+                      No Profile Selected
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Enter a GitHub username or select a popular profile above to render the live telemetry card.
+                    </p>
+                  </div>
+                ) : hasError ? (
+                  <div style={{ textAlign: 'center', padding: '36px 20px', maxWidth: '360px' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        margin: '0 auto 12px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <AlertCircle size={22} />
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#ef4444', marginBottom: '6px' }}>
+                      User Not Found
+                    </div>
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      The account <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>@{generatedUsername}</strong> was not found on GitHub. Please verify the username.
+                    </p>
+                  </div>
+                ) : !hasLoaded || isGenerating ? (
+                  <div
+                    style={{
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      marginBottom: '8px',
-                    }}>
-                      <div style={{ color: colors.dangerFg }}>
-                        {Icons.alert}
-                      </div>
-                      <div style={{
-                        fontSize: isMobile ? '15px' : '16px',
-                        fontWeight: 600,
-                        color: colors.dangerFg,
-                        fontFamily,
-                      }}>
-                        User not found
-                      </div>
+                      padding: '48px 24px',
+                      minHeight: '280px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '14px',
+                        backgroundColor: 'var(--bg-card)',
+                        border: '1px solid var(--border-option)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '16px',
+                        boxShadow: 'var(--shadow-md)',
+                      }}
+                    >
+                      <RotateCw size={22} className="animate-spin" style={{ color: 'var(--primary)' }} />
                     </div>
-                    <div style={{
-                      fontSize: isMobile ? '13px' : '14px',
-                      color: colors.fgMuted,
-                      fontFamily,
-                      lineHeight: 1.5,
-                    }}>
-                      The username &quot;<strong style={{ color: colors.fgDefault }}>{generatedUsername}</strong>&quot; does not exist on GitHub.
-                      <br />Please check the spelling and try again.
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '4px' }}>
+                      Generating Telemetry Card
                     </div>
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                      Fetching live GitHub stats for <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-main)' }}>@{generatedUsername}</span>...
+                    </p>
                   </div>
                 ) : (
-                  <img
-                    key={refreshKey}
-                    src={`${previewUrl}&_t=${refreshKey}`}
-                    alt="GitHub Insights Preview"
-                    style={{ 
-                      maxWidth: '100%', 
-                      height: 'auto',
-                      opacity: isGenerating ? 0.3 : 1,
-                      transition: 'opacity 0.3s ease',
-                    }}
-                    onLoad={() => {}}
-                    onError={() => {
-                      setIsGenerating(false);
-                      setHasError(true);
-                      setHasLoaded(false);
-                    }}
-                  />
+                  <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    <motion.img
+                      key={refreshKey}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      src={`${previewUrl}&_t=${refreshKey}`}
+                      alt="GitHub Insights Card Preview"
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                      className="no-drag"
+                      style={{
+                        maxWidth: '100%',
+                        height: 'auto',
+                        boxShadow: 'var(--shadow-lg)',
+                        userSelect: 'none',
+                      }}
+                      onError={() => {
+                        setIsGenerating(false);
+                        setHasError(true);
+                        setHasLoaded(false);
+                      }}
+                    />
+                  </div>
                 )}
               </div>
+            </div>
+
+            
+            {generatedUsername && !hasError && hasLoaded && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="glass-panel"
+                style={{ padding: '20px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        padding: '6px',
+                        borderRadius: '8px',
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.08)',
+                        color: isDark ? '#60a5fa' : '#2563eb',
+                        display: 'flex',
+                      }}
+                    >
+                      <Terminal size={14} />
+                    </div>
+                    <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+                      Embed Code
+                    </h2>
+                  </div>
+
+                  
+                  <div
+                    style={{
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '3px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--theme-switch-bg)',
+                      border: '1px solid var(--theme-switch-border)',
+                      gap: '2px',
+                    }}
+                  >
+                    {[
+                      { id: 'markdown', label: 'Markdown', icon: FileCode },
+                      { id: 'html', label: 'HTML', icon: Code2 },
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeCodeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveCodeTab(tab.id as 'markdown' | 'html')}
+                          className="embed-tab-btn"
+                          style={{
+                            position: 'relative',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '4px 10px',
+                            borderRadius: '7px',
+                            fontSize: '11.5px',
+                            fontWeight: isActive ? 600 : 500,
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: isActive ? 'var(--theme-pill-color)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            zIndex: 1,
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
+                          {isMounted && isActive && (
+                            <motion.div
+                              layoutId="active-embed-tab-pill"
+                              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                borderRadius: '7px',
+                                backgroundColor: 'var(--theme-pill-bg)',
+                                border: '1px solid var(--theme-pill-border)',
+                                boxShadow: 'var(--theme-pill-shadow)',
+                                zIndex: -1,
+                              }}
+                            />
+                          )}
+                          <Icon size={13} />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                
+                <div style={{ position: 'relative' }}>
+                  <pre
+                    className="code-snippet-box"
+                    style={{
+                      margin: 0,
+                      padding: '14px',
+                      paddingRight: '60px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-field)',
+                      backgroundColor: 'var(--bg-field)',
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--text-main)',
+                      overflow: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-all',
+                      lineHeight: 1.5,
+                      boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.12)',
+                    }}
+                  >
+                    {activeCodeTab === 'markdown' && getMarkdownCode()}
+                    {activeCodeTab === 'html' && getHtmlCode()}
+                  </pre>
+
+                  <button
+                    onClick={() => {
+                      const text = activeCodeTab === 'markdown' ? getMarkdownCode() : getHtmlCode();
+                      copyToClipboard(text, activeCodeTab);
+                    }}
+                    className="btn-secondary code-copy-btn"
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      padding: '5px 10px',
+                      fontSize: '11px',
+                      backgroundColor: copiedType === activeCodeTab ? '#10b981' : undefined,
+                      color: copiedType === activeCodeTab ? '#ffffff' : undefined,
+                      borderColor: copiedType === activeCodeTab ? '#10b981' : undefined,
+                    }}
+                  >
+                    {copiedType === activeCodeTab ? (
+                      <>
+                        <Check size={12} />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
             )}
-          </div>
+
+          </motion.div>
+
         </div>
+
         
-        {generatedUsername && !hasError && hasLoaded && (
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
+        <motion.footer
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.48, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            marginTop: '60px',
+            paddingTop: '24px',
+            borderTop: '1px solid var(--border-subtle)',
+            textAlign: 'center',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-            paddingBottom: '8px',
-            borderBottom: `1px solid ${colors.borderMuted}`,
-          }}>
-            <span style={{ color: colors.fgMuted, display: 'flex' }}>{Icons.code}</span>
-            <h2 style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.fgDefault,
-              margin: 0,
-              fontFamily,
-            }}>
-              Embed Code
-            </h2>
+            flexDirection: 'column',
+            gap: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span>Free and open source</span>
+            <span>•</span>
+            <span>
+              Made possible by{' '}
+              <a
+                href="https://github.com/nishatrhythm/GitHub-Insights/graphs/contributors"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'var(--text-muted)',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                  fontWeight: 600,
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--text-main)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                community contributors
+              </a>
+            </span>
           </div>
-          
-          <div style={{
-            backgroundColor: colors.canvasSubtle,
-            border: `1px solid ${colors.borderDefault}`,
-            borderRadius: '6px',
-            padding: '16px',
-          }}>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: colors.fgMuted,
-                marginBottom: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                fontFamily,
-              }}>
-                Markdown
-              </div>
-              <div style={{ position: 'relative' }}>
-                <pre style={{
-                  margin: 0,
-                  padding: '16px',
-                  paddingRight: '56px',
-                  backgroundColor: colors.canvasDefault,
-                  border: `1px solid ${colors.borderDefault}`,
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontFamily: monoFontFamily,
-                  color: colors.fgDefault,
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  lineHeight: 1.45,
-                }}>
-                  {isMounted ? getMarkdownCode() : 'Loading...'}
-                </pre>
-                <button
-                  onClick={() => copyToClipboard(getMarkdownCode(), 'markdown')}
-                  title={copied === 'markdown' ? 'Copied!' : 'Copy'}
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '32px',
-                    height: '32px',
-                    padding: 0,
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: copied === 'markdown' ? colors.successFg : colors.fgMuted,
-                    backgroundColor: colors.canvasSubtle,
-                    border: `1px solid ${colors.borderDefault}`,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s, border-color 0.2s, color 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.borderMuted;
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.canvasSubtle;
-                  }}
-                >
-                  {copied === 'markdown' ? Icons.check : Icons.copy}
-                </button>
-              </div>
-            </div>
-            
-            <div>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: colors.fgMuted,
-                marginBottom: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                fontFamily,
-              }}>
-                HTML
-              </div>
-              <div style={{ position: 'relative' }}>
-                <pre style={{
-                  margin: 0,
-                  padding: '16px',
-                  paddingRight: '56px',
-                  backgroundColor: colors.canvasDefault,
-                  border: `1px solid ${colors.borderDefault}`,
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontFamily: monoFontFamily,
-                  color: colors.fgDefault,
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  lineHeight: 1.45,
-                }}>
-                  {isMounted ? getHtmlCode() : 'Loading...'}
-                </pre>
-                <button
-                  onClick={() => copyToClipboard(getHtmlCode(), 'html')}
-                  title={copied === 'html' ? 'Copied!' : 'Copy'}
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '32px',
-                    height: '32px',
-                    padding: 0,
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: copied === 'html' ? colors.successFg : colors.fgMuted,
-                    backgroundColor: colors.canvasSubtle,
-                    border: `1px solid ${colors.borderDefault}`,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s, border-color 0.2s, color 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.borderMuted;
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.canvasSubtle;
-                  }}
-                >
-                  {copied === 'html' ? Icons.check : Icons.copy}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        )}
-        
-        <footer style={{
-          paddingTop: '24px',
-          borderTop: `1px solid ${colors.borderMuted}`,
-          textAlign: 'center',
-        }}>
-          <p style={{
-            margin: 0,
-            fontSize: '14px',
-            color: colors.fgDefault,
-            fontFamily,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            fontWeight: 500,
-          }}>
-            Free and open source •{' '}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <a
               href="https://github.com/nishatrhythm/GitHub-Insights"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: colors.accentFg,
-                textDecoration: 'none',
-                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textDecoration: 'underline',
+                textUnderlineOffset: '3px',
+                transition: 'color 0.15s ease',
               }}
-              onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+              onMouseOver={(e) => (e.currentTarget.style.color = 'var(--text-main)')}
+              onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
             >
-              Contribute on GitHub
+              GitHub Repository
             </a>
-          </p>
-          <p style={{
-            margin: '8px 0 0 0',
-            fontSize: '14px',
-            color: colors.fgMuted,
-            fontFamily,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }}>
-            Made with {Icons.heart} by{' '}
+            <span>•</span>
             <a
-              href="https://github.com/nishatrhythm"
+              href="https://github.com/nishatrhythm/GitHub-Insights/blob/main/LICENSE"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: colors.accentFg,
-                textDecoration: 'none',
-                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textDecoration: 'underline',
+                textUnderlineOffset: '3px',
+                transition: 'color 0.15s ease',
               }}
-              onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+              onMouseOver={(e) => (e.currentTarget.style.color = 'var(--text-main)')}
+              onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
             >
-              nishatrhythm
+              MIT License
             </a>
-            {' '}and{' '}
-            <a
-              href="https://github.com/nishatrhythm/GitHub-Insights/graphs/contributors"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: colors.accentFg,
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
-              onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-            >
-              other contributors
-            </a>
-          </p>
-        </footer>
-      </div>
-    </main>
+            <span>•</span>
+            <span>
+              Author:{' '}
+              <a
+                href="https://github.com/nishatrhythm"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'var(--text-muted)',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                  fontWeight: 600,
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--text-main)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                @nishatrhythm
+              </a>
+            </span>
+          </div>
+        </motion.footer>
+
+      </main>
+    </div>
   );
 }
