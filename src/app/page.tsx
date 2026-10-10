@@ -27,6 +27,7 @@ import {
   Terminal,
   History,
   Plus,
+  Square,
 } from "lucide-react";
 
 type SiteTheme = "light" | "dark" | "system";
@@ -137,6 +138,14 @@ const CARD_THEMES: CardThemeOption[] = [
     accentColor: "#00ff41",
     textColor: "#b8ffc9",
   },
+  {
+    id: "glass",
+    name: "Glass",
+    bgColor: "#0a0f1d",
+    cardColor: "#141e34",
+    accentColor: "#38bdf8",
+    textColor: "#ffffff",
+  },
 ];
 
 const DEMO_USERNAMES = [
@@ -174,6 +183,7 @@ export default function Home() {
   const [showHeader, setShowHeader] = useState(true);
   const [showSummary, setShowSummary] = useState(true);
   const [showProfile, setShowProfile] = useState(true);
+  const [showBorder, setShowBorder] = useState(true);
   const [hiddenLangs, setHiddenLangs] = useState<string[]>([]);
   const [langInput, setLangInput] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -277,7 +287,7 @@ export default function Home() {
     hiddenLangs.length > 0
       ? `&hide_langs=${encodeURIComponent(hiddenLangs.join(","))}`
       : "";
-  const previewUrl = `/api/insight?username=${generatedUsername}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}`;
+  const previewUrl = `/api/insight?username=${generatedUsername}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}&border=${showBorder}${hideLangsParam}`;
 
   const triggerGenerate = useCallback(
     (targetUser: string) => {
@@ -304,7 +314,7 @@ export default function Home() {
         }, 120);
       }
 
-      const checkUrl = `/api/insight?username=${trimmed}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}&_t=${Date.now()}`;
+      const checkUrl = `/api/insight?username=${trimmed}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}&border=${showBorder}${hideLangsParam}&_t=${Date.now()}`;
 
       fetch(checkUrl)
         .then((response) => {
@@ -346,6 +356,7 @@ export default function Home() {
       showHeader,
       showSummary,
       showProfile,
+      showBorder,
       hideLangsParam,
     ],
   );
@@ -1333,6 +1344,113 @@ export default function Home() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: "24px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "6px",
+                    borderRadius: "8px",
+                    backgroundColor: isDark
+                      ? "rgba(59, 130, 246, 0.15)"
+                      : "rgba(37, 99, 235, 0.08)",
+                    color: isDark ? "#60a5fa" : "#2563eb",
+                    display: "flex",
+                  }}
+                >
+                  <Square size={16} />
+                </div>
+                <h2
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "var(--text-main)",
+                  }}
+                >
+                  Card Appearance
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "10px 14px",
+                  borderRadius: "12px",
+                  backgroundColor: showBorder
+                    ? "var(--bg-card)"
+                    : "var(--bg-subtle)",
+                  border: "1px solid var(--border-option)",
+                  boxShadow: showBorder ? "var(--shadow-sm)" : "none",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "6px",
+                      borderRadius: "8px",
+                      backgroundColor: showBorder
+                        ? "var(--bg-subtle)"
+                        : "var(--bg-card)",
+                      color: showBorder
+                        ? "var(--primary)"
+                        : "var(--text-subtle)",
+                      display: "flex",
+                      border: "1px solid var(--border-option)",
+                    }}
+                  >
+                    <Square size={14} />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: showBorder
+                          ? "var(--text-main)"
+                          : "var(--text-muted)",
+                      }}
+                    >
+                      Card Border
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: showBorder
+                          ? "var(--text-muted)"
+                          : "var(--text-subtle)",
+                      }}
+                    >
+                      Outline around the whole card
+                    </div>
+                  </div>
+                </div>
+
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={showBorder}
+                    onChange={(e) => setShowBorder(e.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
               </div>
             </div>
 

@@ -15,6 +15,7 @@ interface CardOptions {
   showHeader?: boolean;
   showSummary?: boolean;
   showProfile?: boolean;
+  showBorder?: boolean;
 }
 
 const FONT_FAMILY =
@@ -45,7 +46,7 @@ const ANIMATION_STYLE = `
 `;
 
 function getCardUid(stats: GitHubStats, theme: ThemeColors, options: CardOptions): string {
-  const base = `${stats.user.login}|${theme.accent}|${theme.cardBackground}|${options.showGraph}|${options.showLanguages}|${options.showStreak}|${options.showStats}|${options.showHeader}|${options.showSummary}|${options.showProfile}`;
+  const base = `${stats.user.login}|${theme.accent}|${theme.cardBackground}|${options.showGraph}|${options.showLanguages}|${options.showStreak}|${options.showStats}|${options.showHeader}|${options.showSummary}|${options.showProfile}|${options.showBorder}`;
   let h1 = 0xdeadbeef;
   for (let i = 0; i < base.length; i++) {
     h1 = Math.imul(h1 ^ base.charCodeAt(i), 2654435761);
@@ -144,9 +145,12 @@ function getGradeColor(rank: string): string {
   return GRADE_COLORS[rank] || '#9ca3af';
 }
 
-function calculateGrade(stats: GitHubStats): { grade: string; color: string } {
+function calculateGrade(
+  stats: GitHubStats,
+  theme?: ThemeColors
+): { grade: string; color: string } {
   const grade = stats.rank;
-  const color = getGradeColor(grade);
+  const color = theme?.gradeColor ?? getGradeColor(grade);
   return { grade, color };
 }
 
@@ -398,7 +402,7 @@ function renderStatsCard(
 ): { svg: string; height: number } {
   const { totalStars, totalContributions, totalPRs, totalIssues, contributedRepos } =
     stats;
-  const { grade, color: gradeColor } = calculateGrade(stats);
+  const { grade, color: gradeColor } = calculateGrade(stats, theme);
 
   const statItems = [
     {
@@ -927,6 +931,11 @@ export function generateInsightCard(
       : { svg: "", height: 0 };
   currentY += graphSection.height;
 
+  const showBorder =
+    options.showBorder !== undefined
+      ? options.showBorder
+      : !theme.hideBorder;
+
   const cardHeight = currentY + 28;
   const safeLogin = escapeHtml(stats.user.login);
   const summaryDesc = `${stats.totalContributions} contributions in the last year, ${stats.totalStars} stars, ${stats.currentStreak.count} day streak. Rank ${stats.rank}.`;
@@ -950,7 +959,9 @@ export function generateInsightCard(
   
   <rect x="1" y="1" width="${cardWidth - 2}" height="${
     cardHeight - 2
-  }" rx="15" fill="url(#${cardBgId})" stroke="url(#${borderId})" stroke-width="2"/>
+  }" rx="15" fill="url(#${cardBgId})" ${
+    showBorder ? `stroke="url(#${borderId})" stroke-width="2"` : ""
+  }/>
   
   ${headerSection.svg}
   ${statsCard.svg}

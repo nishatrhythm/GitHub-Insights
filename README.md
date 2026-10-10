@@ -59,6 +59,7 @@ Replace `YOUR_USERNAME` with your GitHub username.
 | `languages` | `true` | Show top programming languages |
 | `streak` | `true` | Show streak statistics |
 | `graph` | `true` | Show contribution graph |
+| `border` | `true` | Show outer card border |
 | `hide_langs` | _(none)_ | Comma-separated list of languages to exclude from the languages section (e.g. `HTML,CSS`). Remaining language percentages are recalculated automatically. |
 
 ### Example with All Options

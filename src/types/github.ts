@@ -99,6 +99,8 @@ export interface ThemeColors {
   backgroundGradient: string;
   cardBackground: string;
   border: string;
+  hideBorder?: boolean;
+  gradeColor?: string;
   title: string;
   text: string;
   textSecondary: string;
