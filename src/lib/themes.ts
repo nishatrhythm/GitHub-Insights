@@ -182,6 +182,20 @@ ocean_radical: {
     iconColor: '#0a0a0a',
     contributionLevels: ['#f0f0f0', '#d4d4d4', '#a3a3a3', '#525252', '#0a0a0a'],
   },
+  
+  hacker: {
+    background: '#000000',
+    backgroundGradient: 'linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%)',
+    cardBackground: '#050805',
+    border: '#00ff41',
+    title: '#00ff41',
+    text: '#b8ffc9',
+    textSecondary: '#2fa84f',
+    accent: '#00ff41',
+    accentSecondary: '#39ff14',
+    iconColor: '#00ff41',
+    contributionLevels: ['#050805', '#033d12', '#066b21', '#0bb53a', '#00ff41'],
+  },
 };
 
 export function getTheme(themeName: string): ThemeColors {

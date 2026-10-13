@@ -52,6 +52,8 @@ const CARD_THEMES: CardThemeOption[] = [
   { id: 'neo_green', name: 'Neo Green', bgColor: '#121212', cardColor: '#181818', accentColor: '#00c875', textColor: '#a6e22e' },
   { id: 'monochrome', name: 'Monochrome', bgColor: '#0A0A0A', cardColor: '#0A0A0A', accentColor: '#ffffff', textColor: '#ffffff' },
   { id: 'monochrome_light', name: 'Monochrome Light', bgColor: '#fafafa', cardColor: '#ffffff', accentColor: '#0a0a0a', textColor: '#0a0a0a' },
+  { id: "hacker", name: "Hacker", bgColor: "#000000", cardColor: "#050805",
+    accentColor: "#00ff41", textColor: "#b8ffc9" },
 ];
 
 const DEMO_USERNAMES = ['mojombo', 'torvalds', 'karpathy', 'sindresorhus', 'gaearon', 'shadcn'];
