@@ -15,6 +15,7 @@ interface CardOptions {
   showHeader?: boolean;
   showSummary?: boolean;
   showProfile?: boolean;
+  showBorder?: boolean;
 }
 
 const FONT_FAMILY =
@@ -45,7 +46,7 @@ const ANIMATION_STYLE = `
 `;
 
 function getCardUid(stats: GitHubStats, theme: ThemeColors, options: CardOptions): string {
-  const base = `${stats.user.login}|${theme.accent}|${theme.cardBackground}|${options.showGraph}|${options.showLanguages}|${options.showStreak}|${options.showStats}|${options.showHeader}|${options.showSummary}|${options.showProfile}`;
+  const base = `${stats.user.login}|${theme.accent}|${theme.cardBackground}|${options.showGraph}|${options.showLanguages}|${options.showStreak}|${options.showStats}|${options.showHeader}|${options.showSummary}|${options.showProfile}|${options.showBorder}`;
   let h1 = 0xdeadbeef;
   for (let i = 0; i < base.length; i++) {
     h1 = Math.imul(h1 ^ base.charCodeAt(i), 2654435761);
@@ -883,6 +884,7 @@ export function generateInsightCard(
   const uid = getCardUid(stats, theme, options);
   const cardBgId = `cardBg-${uid}`;
   const borderId = `border-${uid}`;
+  const showBorder = options.showBorder !== false;
   let currentY = 36;
 
   const headerSection = renderHeaderSection(stats, theme, currentY, cardWidth, {
@@ -948,9 +950,13 @@ export function generateInsightCard(
     </linearGradient>
   </defs>
   
-  <rect x="1" y="1" width="${cardWidth - 2}" height="${
-    cardHeight - 2
-  }" rx="15" fill="url(#${cardBgId})" stroke="url(#${borderId})" stroke-width="2"/>
+  ${
+    showBorder
+      ? `<rect x="1" y="1" width="${cardWidth - 2}" height="${
+          cardHeight - 2
+        }" rx="15" fill="url(#${cardBgId})" stroke="url(#${borderId})" stroke-width="2"/>`
+      : `<rect x="0" y="0" width="${cardWidth}" height="${cardHeight}" rx="15" fill="url(#${cardBgId})"/>`
+  }
   
   ${headerSection.svg}
   ${statsCard.svg}

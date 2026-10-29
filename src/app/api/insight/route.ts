@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
   const showHeader = searchParams.get('header') !== 'false';
   const showSummary = searchParams.get('summary') !== 'false';
   const showProfile = searchParams.get('profile') !== 'false';
+  const showBorder = searchParams.get('border') !== 'false' && searchParams.get('show_border') !== 'false' && searchParams.get('hide_border') !== 'true';
   const hideLangs = searchParams.get('hide_langs');
   const hiddenLanguages = hideLangs ? hideLangs.split(',').map(l => l.trim()).filter(Boolean) : [];
 
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
       showHeader,
       showSummary,
       showProfile,
+      showBorder,
     });
 
     const etag = generateETag(svg);

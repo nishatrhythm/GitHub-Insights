@@ -27,6 +27,7 @@ import {
   Terminal,
   History,
   Plus,
+  Square,
 } from 'lucide-react';
 
 type SiteTheme = 'light' | 'dark' | 'system';
@@ -78,6 +79,7 @@ export default function Home() {
   const [showHeader, setShowHeader] = useState(true);
   const [showSummary, setShowSummary] = useState(true);
   const [showProfile, setShowProfile] = useState(true);
+  const [showBorder, setShowBorder] = useState(true);
   const [hiddenLangs, setHiddenLangs] = useState<string[]>([]);
   const [langInput, setLangInput] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -85,7 +87,7 @@ export default function Home() {
   const [activeCodeTab, setActiveCodeTab] = useState<'markdown' | 'html'>('markdown');
   const [baseUrl, setBaseUrl] = useState('');
   const [isMounted, setIsMounted] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -159,7 +161,7 @@ export default function Home() {
   }, [siteTheme, isDark, isMounted]);
 
   const hideLangsParam = hiddenLangs.length > 0 ? `&hide_langs=${encodeURIComponent(hiddenLangs.join(','))}` : '';
-  const previewUrl = `/api/insight?username=${generatedUsername}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}`;
+  const previewUrl = `/api/insight?username=${generatedUsername}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}&border=${showBorder}${hideLangsParam}`;
 
   const triggerGenerate = useCallback((targetUser: string) => {
     const trimmed = targetUser.trim();
@@ -182,7 +184,7 @@ export default function Home() {
       }, 120);
     }
 
-    const checkUrl = `/api/insight?username=${trimmed}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}${hideLangsParam}&_t=${Date.now()}`;
+    const checkUrl = `/api/insight?username=${trimmed}&theme=${selectedTheme}&graph=${showGraph}&languages=${showLanguages}&streak=${showStreak}&stats=${showStats}&header=${showHeader}&summary=${showSummary}&profile=${showProfile}&border=${showBorder}${hideLangsParam}&_t=${Date.now()}`;
     
     fetch(checkUrl)
       .then((response) => {
@@ -206,7 +208,7 @@ export default function Home() {
         setHasError(true);
         setIsGenerating(false);
       });
-  }, [selectedTheme, showGraph, showLanguages, showStreak, showStats, showHeader, showSummary, showProfile, hideLangsParam]);
+  }, [selectedTheme, showGraph, showLanguages, showStreak, showStats, showHeader, showSummary, showProfile, showBorder, hideLangsParam]);
 
   const handleGenerate = () => {
     triggerGenerate(username);
@@ -887,9 +889,10 @@ export default function Home() {
                   { id: 'languages', label: 'Top Languages', desc: 'Most utilized languages breakdown', checked: showLanguages, setter: setShowLanguages, icon: Code2 },
                   { id: 'streak', label: 'Streak Metrics', desc: 'Active & all-time longest streaks', checked: showStreak, setter: setShowStreak, icon: Trophy },
                   { id: 'graph', label: '31-Day Activity', desc: 'Daily contribution density chart', checked: showGraph, setter: setShowGraph, icon: LineChart },
+                  { id: 'border', label: 'Outer Border', desc: 'Card perimeter outline & border stroke', checked: showBorder, setter: setShowBorder, icon: Square, isStyleOption: true },
                 ].map((item) => {
                   const Icon = item.icon;
-                  const isLastActive = item.checked && activeModulesCount <= 1;
+                  const isLastActive = !item.isStyleOption && item.checked && activeModulesCount <= 1;
 
                   return (
                     <div
@@ -942,7 +945,13 @@ export default function Home() {
                           type="checkbox"
                           checked={item.checked}
                           disabled={isLastActive}
-                          onChange={(e) => handleToggleModule(e.target.checked, item.setter)}
+                          onChange={(e) => {
+                            if (item.isStyleOption) {
+                              item.setter(e.target.checked);
+                            } else {
+                              handleToggleModule(e.target.checked, item.setter);
+                            }
+                          }}
                         />
                         <span className="slider" />
                       </label>
