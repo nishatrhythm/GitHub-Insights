@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Script from 'next/script';
 import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -40,13 +41,16 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body className={`${spaceGrotesk.className}`} suppressHydrationWarning>
-        <script
+      <head>
+        <Script
           id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('site-theme')||'system';var isDark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);d.setAttribute('data-theme',isDark?'dark':'light');d.style.colorScheme=isDark?'dark':'light';}catch(e){}})();`,
           }}
         />
+      </head>
+      <body className={`${spaceGrotesk.className}`} suppressHydrationWarning>
         {children}
       </body>
     </html>
